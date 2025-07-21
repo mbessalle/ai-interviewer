@@ -9,7 +9,13 @@ import { CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import FileUpload from "../fileUpload";
 import Modal from "@/components/dashboard/Modal";
 import InterviewerDetailsModal from "@/components/dashboard/interviewer/interviewerDetailsModal";
@@ -59,14 +65,14 @@ function DetailsPopup({
   const [language, setLanguage] = useState(interviewData.language || "en");
 
   const slideLeft = (id: string, value: number) => {
-    var slider = document.getElementById(`${id}`);
+    const slider = document.getElementById(`${id}`);
     if (slider) {
       slider.scrollLeft = slider.scrollLeft - value;
     }
   };
 
   const slideRight = (id: string, value: number) => {
-    var slider = document.getElementById(`${id}`);
+    const slider = document.getElementById(`${id}`);
     if (slider) {
       slider.scrollLeft = slider.scrollLeft + value;
     }

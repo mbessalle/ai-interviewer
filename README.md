@@ -1,5 +1,3 @@
-
-
 # AI-Interviewer - AI-powered voice interviewer for hiring 💼
 
 AI-Interviewer is an open source platform for companies to conduct AI powered hiring interviews with their candidates.
@@ -11,7 +9,6 @@ AI-Interviewer is an open source platform for companies to conduct AI powered hi
 - **🎙️ AI Voice Interviews:** Let our AI conduct natural, conversational interviews that adapt to candidate responses.
 - **📊 Smart Analysis:** Get detailed insights and scores for each interview response, powered by advanced AI.
 - **📈 Comprehensive Dashboard:** Track all candidate performances and overall stats.
-
 
 ## Initial Setup
 

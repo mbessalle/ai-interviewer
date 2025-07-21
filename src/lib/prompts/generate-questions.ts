@@ -8,8 +8,8 @@ export const generateQuestionsPrompt = (body: {
   context: string;
   language?: string;
 }) => {
-  const isSpanish = body.language === 'es';
-  
+  const isSpanish = body.language === "es";
+
   if (isSpanish) {
     return `Imagina que eres un entrevistador especializado en diseñar preguntas de entrevista para ayudar a los gerentes de contratación a encontrar candidatos con sólida experiencia técnica y en proyectos, facilitando la identificación del candidato ideal para el puesto.
               
@@ -35,7 +35,7 @@ El campo 'questions' debe tomar el formato de un array de objetos con la siguien
 
 Genera estrictamente solo un objeto JSON con las claves 'questions' y 'description'. Todas las preguntas y la descripción deben estar en español.`;
   }
-  
+
   return `Imagine you are an interviewer specialized in designing interview questions to help hiring managers find candidates with strong technical expertise and project experience, making it easier to identify the ideal fit for the role.
               
 Interview Title: ${body.name}
