@@ -48,17 +48,45 @@ const updateInterview = async (payload: any, id: string) => {
 };
 
 const deleteInterview = async (id: string) => {
-  const { error, data } = await supabase
-    .from("interview")
-    .delete()
-    .eq("id", id);
-  if (error) {
-    console.log(error);
+  try {
+    // First delete related responses
+    const { error: responseError } = await supabase
+      .from("response")
+      .delete()
+      .eq("interview_id", id);
+    
+    if (responseError) {
+      console.log("Error deleting responses:", responseError);
+      throw responseError;
+    }
 
-    return [];
+    // Then delete related feedback
+    const { error: feedbackError } = await supabase
+      .from("feedback")
+      .delete()
+      .eq("interview_id", id);
+    
+    if (feedbackError) {
+      console.log("Error deleting feedback:", feedbackError);
+      throw feedbackError;
+    }
+
+    // Finally delete the interview
+    const { error, data } = await supabase
+      .from("interview")
+      .delete()
+      .eq("id", id);
+    
+    if (error) {
+      console.log("Error deleting interview:", error);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.log("Delete interview operation failed:", error);
+    throw error;
   }
-
-  return data;
 };
 
 const getAllRespondents = async (interviewId: string) => {

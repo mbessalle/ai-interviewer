@@ -138,6 +138,11 @@ function EditInterview({ interview }: EditInterviewProps) {
 
     try {
       await InterviewService.deleteInterview(interview.id);
+      fetchInterviews(); // Refresh the interviews list
+      toast.success("Interview deleted successfully.", {
+        position: "bottom-right",
+        duration: 3000,
+      });
       router.push("/dashboard");
     } catch (error) {
       console.error("Error deleting interview:", error);

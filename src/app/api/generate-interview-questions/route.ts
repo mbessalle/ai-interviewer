@@ -50,7 +50,7 @@ export async function POST(req: Request, res: Response) {
     console.error("Full error details:", error);
 
     return NextResponse.json(
-      { error: "internal server error", details: error.message },
+      { error: "internal server error", details: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 },
     );
   }

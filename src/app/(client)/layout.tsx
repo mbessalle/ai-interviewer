@@ -52,7 +52,7 @@ export default function RootLayout({
         )}
       >
         <ClerkProvider
-          fallbackRedirectUrl={"/dashboard"}
+          signInFallbackRedirectUrl={"/dashboard"}
           afterSignOutUrl={"/sign-in"}
         >
           <Providers>

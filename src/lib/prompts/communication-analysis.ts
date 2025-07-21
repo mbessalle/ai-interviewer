@@ -48,3 +48,4 @@ Please provide your analysis in the following JSON format:
   "strengths": [string],       // List of communication strengths demonstrated
   "improvementAreas": [string] // List of areas where communication could be improved
 }`;
+};
