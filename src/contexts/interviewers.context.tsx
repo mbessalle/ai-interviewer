@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useContext, ReactNode, useEffect } from "react";
+import React, { useState, useContext, ReactNode, useEffect, useCallback, useMemo } from "react";
 import { Interviewer } from "@/types/interviewer";
 import { InterviewerService } from "@/services/interviewers.service";
 import { useClerk } from "@clerk/nextjs";
@@ -30,7 +30,7 @@ export function InterviewerProvider({ children }: InterviewerProviderProps) {
   const { user } = useClerk();
   const [interviewersLoading, setInterviewersLoading] = useState(true);
 
-  const fetchInterviewers = async () => {
+  const fetchInterviewers = useCallback(async () => {
     try {
       setInterviewersLoading(true);
       const response = await InterviewerService.getAllInterviewers(
@@ -39,32 +39,32 @@ export function InterviewerProvider({ children }: InterviewerProviderProps) {
       setInterviewers(response);
     } catch (error) {
       console.error(error);
+    } finally {
+      setInterviewersLoading(false);
     }
-    setInterviewersLoading(false);
-  };
+  }, [user?.id]);
 
-  const createInterviewer = async (payload: any) => {
+  const createInterviewer = useCallback(async (payload: any) => {
     await InterviewerService.createInterviewer({ ...payload });
     fetchInterviewers();
-  };
+  }, [fetchInterviewers]);
 
   useEffect(() => {
     if (user?.id) {
       fetchInterviewers();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
+  }, [fetchInterviewers, user?.id]);
+
+  const contextValue = useMemo(() => ({
+    interviewers,
+    setInterviewers,
+    createInterviewer,
+    interviewersLoading,
+    setInterviewersLoading,
+  }), [interviewers, createInterviewer, interviewersLoading]);
 
   return (
-    <InterviewerContext.Provider
-      value={{
-        interviewers,
-        setInterviewers,
-        createInterviewer,
-        interviewersLoading,
-        setInterviewersLoading,
-      }}
-    >
+    <InterviewerContext.Provider value={contextValue}>
       {children}
     </InterviewerContext.Provider>
   );

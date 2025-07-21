@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useOrganization } from "@clerk/nextjs";
 import InterviewCard from "@/components/dashboard/interview/interviewCard";
 import CreateInterviewCard from "@/components/dashboard/interview/createInterviewCard";
@@ -22,71 +22,67 @@ function Interviews() {
     useState<number>(10);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
-  function InterviewsLoader() {
-    return (
-      <>
-        <div className="flex flex-row">
-          <div className="h-60 w-56 ml-1 mr-3 mt-3 flex-none animate-pulse rounded-xl bg-gray-300" />
-          <div className="h-60 w-56 ml-1 mr-3  mt-3 flex-none animate-pulse rounded-xl bg-gray-300" />
-          <div className="h-60 w-56 ml-1 mr-3 mt-3 flex-none animate-pulse rounded-xl bg-gray-300" />
-        </div>
-      </>
-    );
-  }
+  const InterviewsLoader = useMemo(() => (
+    <div className="flex flex-row">
+      <div className="h-60 w-56 ml-1 mr-3 mt-3 flex-none animate-pulse rounded-xl bg-gray-300" />
+      <div className="h-60 w-56 ml-1 mr-3  mt-3 flex-none animate-pulse rounded-xl bg-gray-300" />
+      <div className="h-60 w-56 ml-1 mr-3 mt-3 flex-none animate-pulse rounded-xl bg-gray-300" />
+    </div>
+  ), []);
 
-  useEffect(() => {
-    const fetchOrganizationData = async () => {
-      try {
-        if (organization?.id) {
-          const data = await ClientService.getOrganizationById(organization.id);
-          if (data?.plan) {
-            setCurrentPlan(data.plan);
-            if (data.plan === "free_trial_over") {
-              setIsModalOpen(true);
-            }
-          }
-          if (data?.allowed_responses_count) {
-            setAllowedResponsesCount(data.allowed_responses_count);
+  const fetchOrganizationData = useCallback(async () => {
+    try {
+      if (organization?.id) {
+        const data = await ClientService.getOrganizationById(organization.id);
+        if (data?.plan) {
+          setCurrentPlan(data.plan);
+          if (data.plan === "free_trial_over") {
+            setIsModalOpen(true);
           }
         }
-      } catch (error) {
-        console.error("Error fetching organization data:", error);
-      }
-    };
-
-    fetchOrganizationData();
-  }, [organization]);
-
-  useEffect(() => {
-    const fetchResponsesCount = async () => {
-      if (!organization || currentPlan !== "free") {
-        return;
-      }
-
-      setLoading(true);
-      try {
-        const totalResponses =
-          await ResponseService.getResponseCountByOrganizationId(
-            organization.id,
-          );
-        const hasExceededLimit = totalResponses >= allowedResponsesCount;
-        if (hasExceededLimit) {
-          setCurrentPlan("free_trial_over");
-          await InterviewService.deactivateInterviewsByOrgId(organization.id);
-          await ClientService.updateOrganization(
-            { plan: "free_trial_over" },
-            organization.id,
-          );
+        if (data?.allowed_responses_count) {
+          setAllowedResponsesCount(data.allowed_responses_count);
         }
-      } catch (error) {
-        console.error("Error fetching responses:", error);
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching organization data:", error);
+    }
+  }, [organization?.id]);
 
-    fetchResponsesCount();
+  const fetchResponsesCount = useCallback(async () => {
+    if (!organization || currentPlan !== "free") {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const totalResponses =
+        await ResponseService.getResponseCountByOrganizationId(
+          organization.id,
+        );
+      const hasExceededLimit = totalResponses >= allowedResponsesCount;
+      if (hasExceededLimit) {
+        setCurrentPlan("free_trial_over");
+        await InterviewService.deactivateInterviewsByOrgId(organization.id);
+        await ClientService.updateOrganization(
+          { plan: "free_trial_over" },
+          organization.id,
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching responses:", error);
+    } finally {
+      setLoading(false);
+    }
   }, [organization, currentPlan, allowedResponsesCount]);
+
+  useEffect(() => {
+    fetchOrganizationData();
+  }, [fetchOrganizationData]);
+
+  useEffect(() => {
+    fetchResponsesCount();
+  }, [fetchResponsesCount]);
 
   return (
     <main className="p-8 pt-0 ml-12 mr-auto rounded-md">
@@ -113,7 +109,7 @@ function Interviews() {
             <CreateInterviewCard />
           )}
           {interviewsLoading || loading ? (
-            <InterviewsLoader />
+            InterviewsLoader
           ) : (
             <>
               {isModalOpen && (

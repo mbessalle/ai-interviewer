@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import Image from "next/image";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
@@ -26,57 +26,66 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug }: Props) {
   const [isFetching, setIsFetching] = useState(false);
   const [img, setImg] = useState("");
 
-  useEffect(() => {
-    const fetchInterviewer = async () => {
-      const interviewer =
-        await InterviewerService.getInterviewer(interviewerId);
+  const fetchInterviewer = useCallback(async () => {
+    try {
+      const interviewer = await InterviewerService.getInterviewer(interviewerId);
       setImg(interviewer.image);
-    };
-    fetchInterviewer();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    } catch (error) {
+      console.error("Failed to fetch interviewer:", error);
+    }
+  }, [interviewerId]);
+
+  const fetchResponses = useCallback(async () => {
+    try {
+      const responses = await ResponseService.getAllResponses(id);
+      setResponseCount(responses.length);
+      
+      if (responses.length > 0) {
+        setIsFetching(true);
+        
+        // Process unanalyzed responses in parallel instead of sequentially
+        const unanalyzedResponses = responses.filter(response => !response.is_analysed);
+        
+        if (unanalyzedResponses.length > 0) {
+          const promises = unanalyzedResponses.map(response =>
+            axios.post("/api/get-call", { id: response.call_id })
+              .catch(error => {
+                console.error(`Failed to call api/get-call for response id ${response.call_id}:`, error);
+              })
+          );
+          
+          await Promise.allSettled(promises);
+        }
+        
+        setIsFetching(false);
+      }
+    } catch (error) {
+      console.error("Failed to fetch responses:", error);
+      setIsFetching(false);
+    }
+  }, [id]);
 
   useEffect(() => {
-    const fetchResponses = async () => {
-      try {
-        const responses = await ResponseService.getAllResponses(id);
-        setResponseCount(responses.length);
-        if (responses.length > 0) {
-          setIsFetching(true);
-          for (const response of responses) {
-            if (!response.is_analysed) {
-              try {
-                const result = await axios.post("/api/get-call", {
-                  id: response.call_id,
-                });
+    fetchInterviewer();
+  }, [fetchInterviewer]);
 
-                if (result.status !== 200) {
-                  throw new Error(`HTTP error! status: ${result.status}`);
-                }
-              } catch (error) {
-                console.error(
-                  `Failed to call api/get-call for response id ${response.call_id}:`,
-                  error,
-                );
-              }
-            }
-          }
-          setIsFetching(false);
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
+  useEffect(() => {
     fetchResponses();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchResponses]);
 
-  const copyToClipboard = () => {
+  const interviewUrl = useMemo(() => 
+    readableSlug ? `${base_url}/call/${readableSlug}` : (url as string),
+    [readableSlug, url]
+  );
+
+  const jumpToInterviewUrl = useMemo(() => 
+    readableSlug ? `/call/${readableSlug}` : `/call/${url}`,
+    [readableSlug, url]
+  );
+
+  const copyToClipboard = useCallback(() => {
     navigator.clipboard
-      .writeText(
-        readableSlug ? `${base_url}/call/${readableSlug}` : (url as string),
-      )
+      .writeText(interviewUrl)
       .then(
         () => {
           setCopied(true);
@@ -95,16 +104,13 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug }: Props) {
           console.log("failed to copy", err.mesage);
         },
       );
-  };
+  }, [interviewUrl]);
 
-  const handleJumpToInterview = (event: React.MouseEvent) => {
+  const handleJumpToInterview = useCallback((event: React.MouseEvent) => {
     event.stopPropagation();
     event.preventDefault();
-    const interviewUrl = readableSlug
-      ? `/call/${readableSlug}`
-      : `/call/${url}`;
-    window.open(interviewUrl, "_blank");
-  };
+    window.open(jumpToInterviewUrl, "_blank");
+  }, [jumpToInterviewUrl]);
 
   return (
     <a
@@ -171,4 +177,4 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug }: Props) {
   );
 }
 
-export default InterviewCard;
+export default React.memo(InterviewCard);

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useContext, ReactNode, useEffect } from "react";
+import React, { useState, useContext, ReactNode, useEffect, useCallback, useMemo } from "react";
 import { Interview } from "@/types/interview";
 import { InterviewService } from "@/services/interviews.service";
 import { useClerk, useOrganization } from "@clerk/nextjs";
@@ -33,45 +33,43 @@ export function InterviewProvider({ children }: InterviewProviderProps) {
   const { organization } = useOrganization();
   const [interviewsLoading, setInterviewsLoading] = useState(false);
 
-  const fetchInterviews = async () => {
+  const fetchInterviews = useCallback(async () => {
     try {
       setInterviewsLoading(true);
       const response = await InterviewService.getAllInterviews(
         user?.id as string,
         organization?.id as string,
       );
-      setInterviewsLoading(false);
       setInterviews(response);
     } catch (error) {
       console.error(error);
+    } finally {
+      setInterviewsLoading(false);
     }
-    setInterviewsLoading(false);
-  };
+  }, [user?.id, organization?.id]);
 
-  const getInterviewById = async (interviewId: string) => {
+  const getInterviewById = useCallback(async (interviewId: string) => {
     const response = await InterviewService.getInterviewById(interviewId);
-
     return response;
-  };
+  }, []);
 
   useEffect(() => {
     if (organization?.id || user?.id) {
       fetchInterviews();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [organization?.id, user?.id]);
+  }, [fetchInterviews, organization?.id, user?.id]);
+
+  const contextValue = useMemo(() => ({
+    interviews,
+    setInterviews,
+    getInterviewById,
+    interviewsLoading,
+    setInterviewsLoading,
+    fetchInterviews,
+  }), [interviews, getInterviewById, interviewsLoading, fetchInterviews]);
 
   return (
-    <InterviewContext.Provider
-      value={{
-        interviews,
-        setInterviews,
-        getInterviewById,
-        interviewsLoading,
-        setInterviewsLoading,
-        fetchInterviews,
-      }}
-    >
+    <InterviewContext.Provider value={contextValue}>
       {children}
     </InterviewContext.Provider>
   );
