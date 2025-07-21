@@ -27,10 +27,13 @@ export function ResponseProvider({ children }: ResponseProviderProps) {
     await ResponseService.saveResponse({ ...payload }, call_id);
   }, []);
 
-  const contextValue = useMemo(() => ({
-    createResponse,
-    saveResponse,
-  }), [createResponse, saveResponse]);
+  const contextValue = useMemo(
+    () => ({
+      createResponse,
+      saveResponse,
+    }),
+    [createResponse, saveResponse],
+  );
 
   return (
     <ResponseContext.Provider value={contextValue}>

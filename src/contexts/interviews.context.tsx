@@ -1,6 +1,13 @@
 "use client";
 
-import React, { useState, useContext, ReactNode, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useContext,
+  ReactNode,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import { Interview } from "@/types/interview";
 import { InterviewService } from "@/services/interviews.service";
 import { useClerk, useOrganization } from "@clerk/nextjs";
@@ -59,14 +66,17 @@ export function InterviewProvider({ children }: InterviewProviderProps) {
     }
   }, [fetchInterviews, organization?.id, user?.id]);
 
-  const contextValue = useMemo(() => ({
-    interviews,
-    setInterviews,
-    getInterviewById,
-    interviewsLoading,
-    setInterviewsLoading,
-    fetchInterviews,
-  }), [interviews, getInterviewById, interviewsLoading, fetchInterviews]);
+  const contextValue = useMemo(
+    () => ({
+      interviews,
+      setInterviews,
+      getInterviewById,
+      interviewsLoading,
+      setInterviewsLoading,
+      fetchInterviews,
+    }),
+    [interviews, getInterviewById, interviewsLoading, fetchInterviews],
+  );
 
   return (
     <InterviewContext.Provider value={contextValue}>

@@ -28,7 +28,8 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug }: Props) {
 
   const fetchInterviewer = useCallback(async () => {
     try {
-      const interviewer = await InterviewerService.getInterviewer(interviewerId);
+      const interviewer =
+        await InterviewerService.getInterviewer(interviewerId);
       setImg(interviewer.image);
     } catch (error) {
       console.error("Failed to fetch interviewer:", error);
@@ -39,24 +40,30 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug }: Props) {
     try {
       const responses = await ResponseService.getAllResponses(id);
       setResponseCount(responses.length);
-      
+
       if (responses.length > 0) {
         setIsFetching(true);
-        
+
         // Process unanalyzed responses in parallel instead of sequentially
-        const unanalyzedResponses = responses.filter(response => !response.is_analysed);
-        
+        const unanalyzedResponses = responses.filter(
+          (response) => !response.is_analysed,
+        );
+
         if (unanalyzedResponses.length > 0) {
-          const promises = unanalyzedResponses.map(response =>
-            axios.post("/api/get-call", { id: response.call_id })
-              .catch(error => {
-                console.error(`Failed to call api/get-call for response id ${response.call_id}:`, error);
-              })
+          const promises = unanalyzedResponses.map((response) =>
+            axios
+              .post("/api/get-call", { id: response.call_id })
+              .catch((error) => {
+                console.error(
+                  `Failed to call api/get-call for response id ${response.call_id}:`,
+                  error,
+                );
+              }),
           );
-          
+
           await Promise.allSettled(promises);
         }
-        
+
         setIsFetching(false);
       }
     } catch (error) {
@@ -73,44 +80,45 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug }: Props) {
     fetchResponses();
   }, [fetchResponses]);
 
-  const interviewUrl = useMemo(() => 
-    readableSlug ? `${base_url}/call/${readableSlug}` : (url as string),
-    [readableSlug, url]
+  const interviewUrl = useMemo(
+    () => (readableSlug ? `${base_url}/call/${readableSlug}` : (url as string)),
+    [readableSlug, url],
   );
 
-  const jumpToInterviewUrl = useMemo(() => 
-    readableSlug ? `/call/${readableSlug}` : `/call/${url}`,
-    [readableSlug, url]
+  const jumpToInterviewUrl = useMemo(
+    () => (readableSlug ? `/call/${readableSlug}` : `/call/${url}`),
+    [readableSlug, url],
   );
 
   const copyToClipboard = useCallback(() => {
-    navigator.clipboard
-      .writeText(interviewUrl)
-      .then(
-        () => {
-          setCopied(true);
-          toast.success(
-            "The link to your interview has been copied to your clipboard.",
-            {
-              position: "bottom-right",
-              duration: 3000,
-            },
-          );
-          setTimeout(() => {
-            setCopied(false);
-          }, 2000);
-        },
-        (err) => {
-          console.log("failed to copy", err.mesage);
-        },
-      );
+    navigator.clipboard.writeText(interviewUrl).then(
+      () => {
+        setCopied(true);
+        toast.success(
+          "The link to your interview has been copied to your clipboard.",
+          {
+            position: "bottom-right",
+            duration: 3000,
+          },
+        );
+        setTimeout(() => {
+          setCopied(false);
+        }, 2000);
+      },
+      (err) => {
+        console.log("failed to copy", err.mesage);
+      },
+    );
   }, [interviewUrl]);
 
-  const handleJumpToInterview = useCallback((event: React.MouseEvent) => {
-    event.stopPropagation();
-    event.preventDefault();
-    window.open(jumpToInterviewUrl, "_blank");
-  }, [jumpToInterviewUrl]);
+  const handleJumpToInterview = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation();
+      event.preventDefault();
+      window.open(jumpToInterviewUrl, "_blank");
+    },
+    [jumpToInterviewUrl],
+  );
 
   return (
     <a

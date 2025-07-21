@@ -1,6 +1,13 @@
 "use client";
 
-import React, { useState, useContext, ReactNode, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useContext,
+  ReactNode,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import { Interviewer } from "@/types/interviewer";
 import { InterviewerService } from "@/services/interviewers.service";
 import { useClerk } from "@clerk/nextjs";
@@ -44,10 +51,13 @@ export function InterviewerProvider({ children }: InterviewerProviderProps) {
     }
   }, [user?.id]);
 
-  const createInterviewer = useCallback(async (payload: any) => {
-    await InterviewerService.createInterviewer({ ...payload });
-    fetchInterviewers();
-  }, [fetchInterviewers]);
+  const createInterviewer = useCallback(
+    async (payload: any) => {
+      await InterviewerService.createInterviewer({ ...payload });
+      fetchInterviewers();
+    },
+    [fetchInterviewers],
+  );
 
   useEffect(() => {
     if (user?.id) {
@@ -55,13 +65,16 @@ export function InterviewerProvider({ children }: InterviewerProviderProps) {
     }
   }, [fetchInterviewers, user?.id]);
 
-  const contextValue = useMemo(() => ({
-    interviewers,
-    setInterviewers,
-    createInterviewer,
-    interviewersLoading,
-    setInterviewersLoading,
-  }), [interviewers, createInterviewer, interviewersLoading]);
+  const contextValue = useMemo(
+    () => ({
+      interviewers,
+      setInterviewers,
+      createInterviewer,
+      interviewersLoading,
+      setInterviewersLoading,
+    }),
+    [interviewers, createInterviewer, interviewersLoading],
+  );
 
   return (
     <InterviewerContext.Provider value={contextValue}>

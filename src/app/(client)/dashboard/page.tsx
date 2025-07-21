@@ -22,13 +22,16 @@ function Interviews() {
     useState<number>(10);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
-  const InterviewsLoader = useMemo(() => (
-    <div className="flex flex-row">
-      <div className="h-60 w-56 ml-1 mr-3 mt-3 flex-none animate-pulse rounded-xl bg-gray-300" />
-      <div className="h-60 w-56 ml-1 mr-3  mt-3 flex-none animate-pulse rounded-xl bg-gray-300" />
-      <div className="h-60 w-56 ml-1 mr-3 mt-3 flex-none animate-pulse rounded-xl bg-gray-300" />
-    </div>
-  ), []);
+  const InterviewsLoader = useMemo(
+    () => (
+      <div className="flex flex-row">
+        <div className="h-60 w-56 ml-1 mr-3 mt-3 flex-none animate-pulse rounded-xl bg-gray-300" />
+        <div className="h-60 w-56 ml-1 mr-3  mt-3 flex-none animate-pulse rounded-xl bg-gray-300" />
+        <div className="h-60 w-56 ml-1 mr-3 mt-3 flex-none animate-pulse rounded-xl bg-gray-300" />
+      </div>
+    ),
+    [],
+  );
 
   const fetchOrganizationData = useCallback(async () => {
     try {
@@ -57,9 +60,7 @@ function Interviews() {
     setLoading(true);
     try {
       const totalResponses =
-        await ResponseService.getResponseCountByOrganizationId(
-          organization.id,
-        );
+        await ResponseService.getResponseCountByOrganizationId(organization.id);
       const hasExceededLimit = totalResponses >= allowedResponsesCount;
       if (hasExceededLimit) {
         setCurrentPlan("free_trial_over");
