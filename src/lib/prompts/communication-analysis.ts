@@ -5,10 +5,10 @@ export const SYSTEM_PROMPT = `You are an expert in analyzing communication skill
 
 export const getCommunicationAnalysisPrompt = (
   transcript: string,
-  language: string = 'en'
+  language: string = "en",
 ) => {
-  const isSpanish = language === 'es';
-  
+  const isSpanish = language === "es";
+
   if (isSpanish) {
     return `Analiza las habilidades de comunicación demostradas en la siguiente transcripción de entrevista:
 
@@ -29,7 +29,7 @@ Por favor, proporciona tu análisis en el siguiente formato JSON:
   "improvementAreas": [string] // Lista de áreas donde la comunicación podría mejorarse
 }`;
   }
-  
+
   return `Analyze the communication skills demonstrated in the following interview transcript:
 
 Transcript: ${transcript}

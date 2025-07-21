@@ -54,7 +54,7 @@ const deleteInterview = async (id: string) => {
       .from("response")
       .delete()
       .eq("interview_id", id);
-    
+
     if (responseError) {
       console.log("Error deleting responses:", responseError);
       throw responseError;
@@ -65,7 +65,7 @@ const deleteInterview = async (id: string) => {
       .from("feedback")
       .delete()
       .eq("interview_id", id);
-    
+
     if (feedbackError) {
       console.log("Error deleting feedback:", feedbackError);
       throw feedbackError;
@@ -76,7 +76,7 @@ const deleteInterview = async (id: string) => {
       .from("interview")
       .delete()
       .eq("id", id);
-    
+
     if (error) {
       console.log("Error deleting interview:", error);
       throw error;
