@@ -47,6 +47,7 @@ export default clerkMiddleware((auth, req) => {
 
     if (!userId && isProtectedRoute(req)) {
       console.log(`[MIDDLEWARE] Redirecting to sign-in: ${pathname}`);
+      
       return auth().redirectToSignIn();
     }
     
