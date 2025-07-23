@@ -19,19 +19,24 @@ const isProtectedRoute = createRouteMatcher([
 
 export default clerkMiddleware((auth, req) => {
   const pathname = req.nextUrl.pathname;
-  
+
   console.log(`[MIDDLEWARE] ==========================================`);
   console.log(`[MIDDLEWARE] Request: ${pathname}`);
   console.log(`[MIDDLEWARE] Is public route: ${isPublicRoute(req)}`);
-  
+
   // Skip ALL Clerk processing for public routes (like /call/* for interviews)
   if (isPublicRoute(req)) {
-    console.log(`[MIDDLEWARE] Public route - allowing access without auth: ${pathname}`);
-    return; // Exit early, don't touch Clerk at all
+    console.log(
+      `[MIDDLEWARE] Public route - allowing access without auth: ${pathname}`,
+    );
+    
+return; // Exit early, don't touch Clerk at all
   }
-  
+
   // Only process authentication for protected routes
-  console.log(`[MIDDLEWARE] Protected route - applying authentication: ${pathname}`);
+  console.log(
+    `[MIDDLEWARE] Protected route - applying authentication: ${pathname}`,
+  );
   try {
     auth().protect();
     console.log(`[MIDDLEWARE] Authentication successful: ${pathname}`);
