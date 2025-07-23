@@ -21,7 +21,7 @@ const metadata = {
     siteName: "AI-Interviewer",
     images: [
       {
-        url: "/ai-interviewer.png",
+        url: "/AI-Interviewer.jpg",
         width: 800,
         height: 600,
       },

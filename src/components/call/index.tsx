@@ -558,7 +558,7 @@ function Call({ interview }: InterviewProps) {
         </Card>
         <a
           className="flex flex-row justify-center align-middle mt-3"
-          href="https://folo-up.co/"
+          href=""
           target="_blank"
         >
           <div className="text-center text-md font-semibold mr-2  ">
