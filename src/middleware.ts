@@ -29,8 +29,8 @@ export default clerkMiddleware((auth, req) => {
     console.log(
       `[MIDDLEWARE] Public route - allowing access without auth: ${pathname}`,
     );
-    
-return; // Exit early, don't touch Clerk at all
+
+    return; // Exit early, don't touch Clerk at all
   }
 
   // Only process authentication for protected routes
