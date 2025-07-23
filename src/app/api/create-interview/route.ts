@@ -3,11 +3,18 @@ import { NextResponse } from "next/server";
 import { InterviewService } from "@/services/interviews.service";
 import { logger } from "@/lib/logger";
 
-const base_url = process.env.NEXT_PUBLIC_LIVE_URL;
+// Use current request host instead of hardcoded URL
+const getBaseUrl = (req: Request) => {
+  const host = req.headers.get("host");
+  const protocol = req.headers.get("x-forwarded-proto") || "https";
+  
+return `${protocol}://${host}`;
+};
 
 export async function POST(req: Request, res: Response) {
   try {
     const url_id = nanoid();
+    const base_url = getBaseUrl(req);
     const url = `${base_url}/call/${url_id}`;
     const body = await req.json();
 
