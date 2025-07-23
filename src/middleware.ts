@@ -18,42 +18,25 @@ const isProtectedRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware((auth, req) => {
-  const url = req.url;
   const pathname = req.nextUrl.pathname;
   
   console.log(`[MIDDLEWARE] ==========================================`);
   console.log(`[MIDDLEWARE] Request: ${pathname}`);
-  console.log(`[MIDDLEWARE] Full URL: ${url}`);
-  
-  // Test individual patterns
-  console.log(`[MIDDLEWARE] Pattern tests:`);
-  console.log(`[MIDDLEWARE] - Matches /call(.*): ${pathname.match(/^\/call.*/)}`);
-  console.log(`[MIDDLEWARE] - Matches /dashboard(.*): ${pathname.match(/^\/dashboard.*/)}`);
-  console.log(`[MIDDLEWARE] - Matches /interviews(.*): ${pathname.match(/^\/interviews.*/)}`);
-  
   console.log(`[MIDDLEWARE] Is public route: ${isPublicRoute(req)}`);
-  console.log(`[MIDDLEWARE] Is protected route: ${isProtectedRoute(req)}`);
   
+  // Skip ALL Clerk processing for public routes (like /call/* for interviews)
+  if (isPublicRoute(req)) {
+    console.log(`[MIDDLEWARE] Public route - allowing access without auth: ${pathname}`);
+    return; // Exit early, don't touch Clerk at all
+  }
+  
+  // Only process authentication for protected routes
+  console.log(`[MIDDLEWARE] Protected route - applying authentication: ${pathname}`);
   try {
-    const userId = auth().userId;
-    console.log(`[MIDDLEWARE] User ID: ${userId || 'none'}`);
-
-    if (!isPublicRoute(req)) {
-      console.log(`[MIDDLEWARE] Protecting route: ${pathname}`);
-      auth().protect();
-    } else {
-      console.log(`[MIDDLEWARE] Allowing public access: ${pathname}`);
-    }
-
-    if (!userId && isProtectedRoute(req)) {
-      console.log(`[MIDDLEWARE] Redirecting to sign-in: ${pathname}`);
-      
-      return auth().redirectToSignIn();
-    }
-    
-    console.log(`[MIDDLEWARE] Request completed successfully: ${pathname}`);
+    auth().protect();
+    console.log(`[MIDDLEWARE] Authentication successful: ${pathname}`);
   } catch (error) {
-    console.error(`[MIDDLEWARE] Error processing request: ${pathname}`, error);
+    console.error(`[MIDDLEWARE] Authentication failed for ${pathname}:`, error);
     throw error;
   }
 });
