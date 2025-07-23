@@ -7,8 +7,8 @@ import { logger } from "@/lib/logger";
 const getBaseUrl = (req: Request) => {
   const host = req.headers.get("host");
   const protocol = req.headers.get("x-forwarded-proto") || "https";
-  
-return `${protocol}://${host}`;
+
+  return `${protocol}://${host}`;
 };
 
 export async function POST(req: Request, res: Response) {

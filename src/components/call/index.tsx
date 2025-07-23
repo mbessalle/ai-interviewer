@@ -323,17 +323,19 @@ function Call({ interview }: InterviewProps) {
             {!isStarted && !isEnded && !isOldUser && (
               <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2  border border-indigo-200 rounded-md p-2 m-2 bg-slate-50">
                 <div>
-                  {interview?.logo_url && (
-                    <div className="p-1 flex justify-center">
-                      <Image
-                        src={interview?.logo_url}
-                        alt="Logo"
-                        className="h-10 w-auto"
-                        width={100}
-                        height={100}
-                      />
-                    </div>
-                  )}
+                  <div className="p-1 flex justify-center">
+                    <Image
+                      src={
+                        interview?.logo_url && interview.logo_url.trim() !== ""
+                          ? interview.logo_url
+                          : "/AI-Interviewer.jpg"
+                      }
+                      alt="Logo"
+                      className="h-10 w-auto"
+                      width={100}
+                      height={100}
+                    />
+                  </div>
                   <div className="p-2 font-normal text-sm mb-4 whitespace-pre-line">
                     {interview?.description}
                     <p className="font-bold text-sm">

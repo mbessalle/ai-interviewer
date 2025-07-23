@@ -31,6 +31,9 @@ yarn-error.log*
 # repository files
 repomix-output.xml
 
+# context files (local development only)
+CONTEXT_MEMORY.md
+
 
 # vercel
 .vercel
