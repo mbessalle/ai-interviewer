@@ -57,8 +57,8 @@ export function InterviewProvider({ children }: InterviewProviderProps) {
 
   const getInterviewById = useCallback(async (interviewId: string) => {
     const response = await InterviewService.getInterviewById(interviewId);
-    
-return response;
+
+    return response;
   }, []);
 
   useEffect(() => {
