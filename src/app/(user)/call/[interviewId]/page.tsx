@@ -146,11 +146,7 @@ function InterviewInterface({ params }: Props) {
         </div>
         <div className="text-center text-md font-semibold mr-2 my-5">
           Powered by{" "}
-          <a
-            className="font-bold underline"
-            href=""
-            target="_blank"
-          >
+          <a className="font-bold underline" href="" target="_blank">
             AI-<span className="text-indigo-600">Interviewer</span>
           </a>
         </div>
