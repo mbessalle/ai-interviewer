@@ -8,7 +8,7 @@ import { CopyCheck } from "lucide-react";
 import { ResponseService } from "@/services/responses.service";
 import axios from "axios";
 import MiniLoader from "@/components/loaders/mini-loader/miniLoader";
-import { InterviewerService } from "@/services/interviewers.service";
+import { useInterviewerById } from "@/hooks/useInterviewersData";
 
 interface Props {
   name: string | null;
@@ -24,17 +24,10 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug }: Props) {
   const [copied, setCopied] = useState(false);
   const [responseCount, setResponseCount] = useState<number | null>(null);
   const [isFetching, setIsFetching] = useState(false);
-  const [img, setImg] = useState("");
 
-  const fetchInterviewer = useCallback(async () => {
-    try {
-      const interviewer =
-        await InterviewerService.getInterviewer(interviewerId);
-      setImg(interviewer.image);
-    } catch (error) {
-      console.error("Failed to fetch interviewer:", error);
-    }
-  }, [interviewerId]);
+  // Get interviewer data from shared hook - no individual API calls
+  const interviewer = useInterviewerById(interviewerId);
+  const img = interviewer?.image || "/AI-Interviewer.jpg"; // Default fallback
 
   const fetchResponses = useCallback(async () => {
     try {
@@ -71,10 +64,6 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug }: Props) {
       setIsFetching(false);
     }
   }, [id]);
-
-  useEffect(() => {
-    fetchInterviewer();
-  }, [fetchInterviewer]);
 
   useEffect(() => {
     fetchResponses();
@@ -148,6 +137,9 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug }: Props) {
                 width={70}
                 height={70}
                 className="object-cover object-center"
+                priority={true}
+                unoptimized={false}
+                loading="eager"
               />
             </div>
             <div className="text-black text-sm font-semibold mr-2 whitespace-nowrap">

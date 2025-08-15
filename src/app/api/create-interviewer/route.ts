@@ -20,7 +20,7 @@ export async function GET(res: NextRequest) {
           type: "end_call",
           name: "end_call_1",
           description:
-            "End the call if the user uses goodbye phrases such as 'bye,' 'goodbye,' or 'have a nice day.' ",
+            "End the call only when ALL the predefined questions have been asked and answered. Use this to conclude the interview professionally.",
         },
       ],
     });

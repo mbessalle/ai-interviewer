@@ -36,9 +36,9 @@ interface InterviewProviderProps {
 
 export function InterviewProvider({ children }: InterviewProviderProps) {
   const [interviews, setInterviews] = useState<Interview[]>([]);
-  const { user } = useClerk();
-  const { organization } = useOrganization();
-  const [interviewsLoading, setInterviewsLoading] = useState(false);
+  const { user, isLoaded: userLoaded } = useClerk();
+  const { organization, isLoaded: orgLoaded } = useOrganization();
+  const [interviewsLoading, setInterviewsLoading] = useState(true);
 
   const fetchInterviews = useCallback(async () => {
     try {
@@ -62,10 +62,15 @@ export function InterviewProvider({ children }: InterviewProviderProps) {
   }, []);
 
   useEffect(() => {
-    if (organization?.id || user?.id) {
-      fetchInterviews();
+    if (userLoaded && orgLoaded) {
+      if (user?.id && organization?.id) {
+        fetchInterviews();
+      } else {
+        // Both Clerk and org are loaded but no user/org data
+        setInterviewsLoading(false);
+      }
     }
-  }, [fetchInterviews, organization?.id, user?.id]);
+  }, [userLoaded, orgLoaded, user?.id, organization?.id, fetchInterviews]);
 
   const contextValue = useMemo(
     () => ({

@@ -9,13 +9,20 @@ import { InterviewService } from "@/services/interviews.service";
 import { ClientService } from "@/services/clients.service";
 import { ResponseService } from "@/services/responses.service";
 import { useInterviews } from "@/contexts/interviews.context";
+import { useInterviewsQuery } from "@/hooks/useInterviewsQuery";
+import { usePreloadImages } from "@/hooks/usePreloadImages";
+import { useInterviewersData } from "@/hooks/useInterviewersData";
 import Modal from "@/components/dashboard/Modal";
 import { Gem, Plus } from "lucide-react";
 import Image from "next/image";
 
 function Interviews() {
-  const { interviews, interviewsLoading } = useInterviews();
+  const { data: interviews = [], isLoading: interviewsLoading } =
+    useInterviewsQuery();
+  const { data: interviewers = [], isLoading: interviewersLoading } =
+    useInterviewersData();
   const { organization } = useOrganization();
+  const imagesPreloaded = usePreloadImages();
   const [loading, setLoading] = useState<boolean>(false);
   const [currentPlan, setCurrentPlan] = useState<string>("");
   const [allowedResponsesCount, setAllowedResponsesCount] =
@@ -109,7 +116,10 @@ function Interviews() {
           ) : (
             <CreateInterviewCard />
           )}
-          {interviewsLoading || loading ? (
+          {interviewsLoading ||
+          interviewersLoading ||
+          loading ||
+          !imagesPreloaded ? (
             InterviewsLoader
           ) : (
             <>
