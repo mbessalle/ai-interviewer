@@ -14,9 +14,15 @@ interface Props {
   interviewData: InterviewBase;
   setProceed: (proceed: boolean) => void;
   setOpen: (open: boolean) => void;
+  onInterviewCreated?: () => void;
 }
 
-function QuestionsPopup({ interviewData, setProceed, setOpen }: Props) {
+function QuestionsPopup({
+  interviewData,
+  setProceed,
+  setOpen,
+  onInterviewCreated,
+}: Props) {
   const { user } = useClerk();
   const { organization } = useOrganization();
   const [isClicked, setIsClicked] = useState(false);
@@ -85,7 +91,12 @@ function QuestionsPopup({ interviewData, setProceed, setOpen }: Props) {
         interviewData: sanitizedInterviewData,
       });
       setIsClicked(false);
-      fetchInterviews();
+
+      // Trigger React Query cache invalidation
+      if (onInterviewCreated) {
+        await onInterviewCreated();
+      }
+
       setOpen(false);
     } catch (error) {
       console.error("Error creating interview:", error);

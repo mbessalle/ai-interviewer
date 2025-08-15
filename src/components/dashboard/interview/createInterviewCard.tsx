@@ -6,7 +6,11 @@ import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import CreateInterviewModal from "@/components/dashboard/interview/createInterviewModal";
 import Modal from "@/components/dashboard/Modal";
 
-function CreateInterviewCard() {
+interface Props {
+  onInterviewCreated?: () => void;
+}
+
+function CreateInterviewCard({ onInterviewCreated }: Props) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -33,7 +37,11 @@ function CreateInterviewCard() {
           setOpen(false);
         }}
       >
-        <CreateInterviewModal open={open} setOpen={setOpen} />
+        <CreateInterviewModal
+          open={open}
+          setOpen={setOpen}
+          onInterviewCreated={onInterviewCreated}
+        />
       </Modal>
     </>
   );

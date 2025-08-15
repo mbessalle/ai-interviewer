@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { useOrganization } from "@clerk/nextjs";
+import { useOrganization, useUser } from "@clerk/nextjs";
+import { useQueryClient } from "@tanstack/react-query";
 import InterviewCard from "@/components/dashboard/interview/interviewCard";
 import CreateInterviewCard from "@/components/dashboard/interview/createInterviewCard";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
@@ -22,6 +23,8 @@ function Interviews() {
   const { data: interviewers = [], isLoading: interviewersLoading } =
     useInterviewersData();
   const { organization } = useOrganization();
+  const { user } = useUser();
+  const queryClient = useQueryClient();
   const imagesPreloaded = usePreloadImages();
   const [loading, setLoading] = useState<boolean>(false);
   const [currentPlan, setCurrentPlan] = useState<string>("");
@@ -114,7 +117,13 @@ function Interviews() {
               </CardContent>
             </Card>
           ) : (
-            <CreateInterviewCard />
+            <CreateInterviewCard
+              onInterviewCreated={async () => {
+                await queryClient.invalidateQueries({
+                  queryKey: ["interviews", user?.id, organization?.id],
+                });
+              }}
+            />
           )}
           {interviewsLoading ||
           interviewersLoading ||

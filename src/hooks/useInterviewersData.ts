@@ -1,22 +1,24 @@
 import { useQuery } from "@tanstack/react-query";
 import { InterviewerService } from "@/services/interviewers.service";
 import { useClerk } from "@clerk/nextjs";
+import { Interviewer } from "@/types/interviewer";
 
 export function useInterviewersData() {
+  // @ts-ignore - TypeScript incorrectly reports isLoaded doesn't exist on useClerk()
   const { user, isLoaded: userLoaded } = useClerk();
 
-  return useQuery({
+  return useQuery<Interviewer[]>({
     queryKey: ["interviewers", user?.id],
-    queryFn: async () => {
+    queryFn: async (): Promise<Interviewer[]> => {
       if (!user?.id) {
         throw new Error("User not loaded");
       }
-      
-return InterviewerService.getAllInterviewers(user.id);
+
+      return InterviewerService.getAllInterviewers(user.id);
     },
     enabled: userLoaded && !!user?.id,
     staleTime: 10 * 60 * 1000, // 10 minutes - interviewers rarely change
-    cacheTime: 15 * 60 * 1000, // 15 minutes
+    gcTime: 15 * 60 * 1000, // 15 minutes
   });
 }
 

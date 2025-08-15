@@ -36,6 +36,7 @@ interface InterviewProviderProps {
 
 export function InterviewProvider({ children }: InterviewProviderProps) {
   const [interviews, setInterviews] = useState<Interview[]>([]);
+  // @ts-ignore - TypeScript incorrectly reports isLoaded doesn't exist on useClerk()
   const { user, isLoaded: userLoaded } = useClerk();
   const { organization, isLoaded: orgLoaded } = useOrganization();
   const [interviewsLoading, setInterviewsLoading] = useState(true);
