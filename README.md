@@ -10,6 +10,10 @@ then sees the transcript, a communication analysis with supporting quotes, and i
 
 Live: [ai-interviewer-neon.vercel.app](https://ai-interviewer-neon.vercel.app) (sign-in required).
 
+|                                Recruiter dashboard                                |                                                  Generated questions                                                  |                                                  Candidate page                                                   |
+| :-------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------: |
+| <img src="docs/img/dashboard.jpg" alt="Dashboard with one interview" width="260"> | <img src="docs/img/generated-questions.jpg" alt="Questions generated for a Senior AI Engineer interview" width="260"> | <img src="docs/img/candidate-page.jpg" alt="The page a candidate opens to start the voice interview" width="260"> |
+
 |                            |                                                                                                                 |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | **Full stack**             | Next.js 14 (App Router), TypeScript, Tailwind, shadcn/ui, Postgres with Drizzle, Clerk auth, deployed on Vercel |
@@ -118,7 +122,10 @@ yarn build
   validated replies.
 - The queries and access rules are tested against an in-process Postgres and were run once through the
   production driver against a Postgres 16 server.
-- There are no end-to-end tests of the voice call.
+- On the deployed app, signed in: listing interviewers, creating an interview with generated questions and
+  opening it all work; signed out, the candidate page loads and a voice call can be registered with Retell.
+- Joining the audio of a call needs a microphone and has not been re-tested since the Retell SDK upgrade.
+- There are no automated end-to-end tests of the voice call.
 
 ## License
 
