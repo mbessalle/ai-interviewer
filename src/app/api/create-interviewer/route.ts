@@ -30,7 +30,8 @@ export async function GET(res: NextRequest) {
     }
 
     const newModel = await retellClient.llm.create({
-      model: "gpt-4o",
+      // Retell no longer offers gpt-4o; this matches the model the existing agents use.
+      model: "gpt-5.1",
       general_prompt: RETELL_AGENT_GENERAL_PROMPT,
       general_tools: [
         {

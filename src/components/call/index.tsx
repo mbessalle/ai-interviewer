@@ -49,6 +49,9 @@ type registerCallResponseType = {
     registerCallResponse: {
       call_id: string;
       access_token: string;
+      // How the browser reaches the call; returned by Retell when the call is created.
+      transport?: "livekit" | "gateway";
+      ice_servers?: RTCIceServer[];
     };
   };
 };
@@ -216,10 +219,13 @@ function Call({ interview }: InterviewProps) {
         { dynamic_data: data, interviewer_id: interview?.interviewer_id },
       );
       if (registerCallResponse.data.registerCallResponse.access_token) {
+        const registered = registerCallResponse.data.registerCallResponse;
         await webClient
           .startCall({
-            accessToken:
-              registerCallResponse.data.registerCallResponse.access_token,
+            accessToken: registered.access_token,
+            callId: registered.call_id,
+            transport: registered.transport,
+            iceServers: registered.ice_servers,
           })
           .catch(console.error);
         setIsCalling(true);

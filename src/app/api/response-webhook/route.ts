@@ -9,19 +9,17 @@ export async function POST(req: NextRequest, res: NextResponse) {
     return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
   }
 
-  if (
-    !Retell.verify(
-      JSON.stringify(req.body),
-      apiKey,
-      req.headers.get("x-retell-signature") as string,
-    )
-  ) {
+  // The signature covers the exact bytes Retell sent, so the body is read as text first.
+  const rawBody = await req.text();
+  const signature = req.headers.get("x-retell-signature") ?? "";
+
+  if (!(await Retell.verify(rawBody, apiKey, signature))) {
     console.error("Invalid signature");
 
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
-  const { event, call } = req.body as unknown as { event: string; call: any };
+  const { event, call } = JSON.parse(rawBody) as { event: string; call: any };
 
   switch (event) {
     case "call_started":
@@ -31,7 +29,8 @@ export async function POST(req: NextRequest, res: NextResponse) {
       console.log("Call ended event received", call.call_id);
       break;
     case "call_analyzed":
-      const result = await axios.post("/api/get-call", {
+      // A server has no page to be relative to, so the address is built from this request.
+      await axios.post(new URL("/api/get-call", req.url).toString(), {
         id: call.call_id,
       });
       console.log("Call analyzed event received", call.call_id);
