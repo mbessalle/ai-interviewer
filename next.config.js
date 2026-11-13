@@ -1,7 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Runs src/instrumentation.ts at server start (OpenTelemetry tracing).
-  experimental: { instrumentationHook: true },
+  experimental: {
+    instrumentationHook: true,
+    // The Postgres driver is loaded by Node at run time instead of being bundled.
+    serverComponentsExternalPackages: ["postgres"],
+  },
   async redirects() {
     return [
       {

@@ -32,9 +32,8 @@ NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
 NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
 
-# Database
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+# Database (any Postgres; "docker compose up -d postgres" starts this one locally)
+DATABASE_URL=postgres://interviewer:interviewer@localhost:5432/interviewer
 
 # AI Services
 OPENAI_API_KEY=your_openai_api_key
@@ -60,7 +59,7 @@ EOL
 fi
 
 echo "🗄️  Setting up database schema..."
-echo "📋 Make sure to run the SQL commands in supabase_schema.sql in your Supabase dashboard."
+echo "📋 Start a Postgres (docker compose up -d postgres) and create the tables with: yarn db:migrate"
 
 echo "🧹 Setting up code quality tools..."
 echo "✅ Prettier and ESLint are already configured in package.json"
@@ -72,7 +71,7 @@ yarn lint --fix
 
 echo "🚀 Setup complete! To start development:"
 echo "   1. Edit .env.local with your API keys"
-echo "   2. Run the SQL schema in your Supabase dashboard"
+echo "   2. Create the tables with: yarn db:migrate"
 echo "   3. Start the development server with: yarn dev"
 echo ""
 echo "⚠️  IMPORTANT: Always run 'npx prettier --write . && yarn lint --fix' before committing!"

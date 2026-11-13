@@ -22,7 +22,7 @@ npx prettier --write .
 ## Tech Stack
 
 - **Framework**: Next.js 14 with App Router, TypeScript
-- **Database**: Supabase (PostgreSQL) - direct client queries, no ORM
+- **Database**: Postgres through Drizzle ORM (`DATABASE_URL`); the browser never queries it directly
 - **Auth**: Clerk (user & organization management)
 - **AI**: OpenAI GPT-4o (questions/analysis), Retell AI (voice conversations)
 - **UI**: Tailwind CSS, Shadcn/UI, Radix UI
@@ -36,12 +36,14 @@ npx prettier --write .
 - `src/app/api/` - API routes for interview management, AI calls, webhooks
 
 ### Key Directories
-- `src/services/` - Data access layer (Supabase queries for interviews, responses, etc.)
+- `src/db/` - Drizzle schema (`schema.ts`), connection (`client.ts`) and queries (`queries/`), server-only
+- `src/services/` - `*.actions.ts` are guarded server actions the browser calls; `*.service.ts` group them
+- `src/lib/access.ts` - who may call what (Clerk session based)
 - `src/contexts/` - React Context providers for global state
 - `src/hooks/` - Custom React hooks for data fetching
 - `src/components/ui/` - Shadcn/UI components
 - `src/lib/prompts/` - AI prompt templates (English & Spanish)
-- `src/types/` - TypeScript types including `database.types.ts` (Supabase-generated)
+- `src/types/` - TypeScript types for the rows the UI uses
 
 ### API Endpoints
 - `POST /api/create-interview` - Create interview with questions
@@ -59,7 +61,7 @@ npx prettier --write .
 
 ## Database Schema
 
-Main tables in Supabase (see `supabase_schema.sql`):
+Main tables (see `src/db/schema.ts`; migrations in `drizzle/`, created with `yarn db:generate`, applied with `yarn db:migrate`):
 - `organization` - Multi-tenant support with plan tiers (free/pro)
 - `user` - Clerk users linked to organizations
 - `interviewer` - AI agent configurations (empathy, exploration, rapport, speed)
@@ -71,14 +73,15 @@ Main tables in Supabase (see `supabase_schema.sql`):
 
 Required in `.env.local` (see `.env.example`):
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` - Clerk auth
-- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Database
+- `DATABASE_URL` - Postgres connection string (`docker compose up -d postgres` starts a local one)
 - `OPENAI_API_KEY` - Question generation and analysis
 - `RETELL_API_KEY` - Voice interview orchestration
 - `NEXT_PUBLIC_LIVE_URL` - Application URL for interview links
 
 ## Code Patterns
 
-- Services use Supabase client: `createClientComponentClient<Database>()` from `@supabase/auth-helpers-nextjs`
+- Client components call `XService.method()`, which are server actions; API routes import from `@/db/queries/*` directly
+- A new server action must start with a rule from `src/lib/access.ts` and get a case in `tests/access.test.ts`
 - API routes export `POST`/`GET` handlers returning `NextResponse.json()`
 - Components use `"use client"` directive for client-side interactivity
 - Forms use React Hook Form with Zod validation

@@ -1,6 +1,6 @@
 import { logger } from "@/lib/logger";
 import { generateInterviewAnalytics } from "@/services/analytics.service";
-import { ResponseService } from "@/services/responses.service";
+import { getResponseByCallId, updateResponse } from "@/db/queries/responses";
 import { Response } from "@/types/response";
 import { NextResponse } from "next/server";
 import Retell from "retell-sdk";
@@ -13,9 +13,10 @@ export async function POST(req: Request, res: Response) {
   logger.info("get-call request received");
   const body = await req.json();
 
-  const callDetails: Response = await ResponseService.getResponseByCallId(
-    body.id,
-  );
+  const callDetails = await getResponseByCallId(body.id);
+  if (!callDetails) {
+    return NextResponse.json({ error: "call not found" }, { status: 404 });
+  }
   let callResponse = callDetails.details;
   if (callDetails.is_analysed) {
     return NextResponse.json(
@@ -42,7 +43,7 @@ export async function POST(req: Request, res: Response) {
 
   const analytics = result.analytics;
 
-  await ResponseService.saveResponse(
+  await updateResponse(
     {
       details: callResponse,
       is_analysed: true,

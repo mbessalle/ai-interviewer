@@ -8,7 +8,6 @@ const isPublicRoute = createRouteMatcher([
   "/api/register-call(.*)",
   "/api/get-call(.*)",
   "/api/generate-interview-questions(.*)",
-  "/api/create-interviewer(.*)",
   "/api/analyze-communication(.*)",
 ]);
 

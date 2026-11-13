@@ -8,3 +8,19 @@ services:
     environment:
       - NODE_ENV=production
     restart: unless-stopped
+
+  # A local Postgres for development:  docker compose up -d postgres
+  # then DATABASE_URL=postgres://interviewer:interviewer@localhost:5432/interviewer
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: interviewer
+      POSTGRES_PASSWORD: interviewer
+      POSTGRES_DB: interviewer
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
