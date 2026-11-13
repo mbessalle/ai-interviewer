@@ -1,152 +1,100 @@
-# AI-Interviewer - AI-powered voice interviewer for hiring 💼
+# AI Interviewer
 
-AI-Interviewer is a modern, open-source platform that revolutionizes the hiring process by conducting AI-powered voice interviews with candidates. Built with cutting-edge technology, it streamlines recruitment workflows while providing deep insights into candidate performance.
+[![CI](https://github.com/mbessalle/ai-interviewer/actions/workflows/ci.yml/badge.svg)](https://github.com/mbessalle/ai-interviewer/actions/workflows/ci.yml)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-## 🚀 What It Does
+A voice interviewer for hiring. A recruiter describes a role, the app generates the interview questions, and
+each candidate gets a link where an AI agent interviews them by voice, in English or Spanish. The recruiter
+then sees the transcript, a communication analysis with supporting quotes, and insights across all candidates.
 
-AI-Interviewer transforms traditional hiring by automating the initial screening process through intelligent voice conversations. Companies can create tailored interviews, share them with candidates, and receive comprehensive analysis reports - all powered by advanced AI technology.
+Live: [ai-interviewer-neon.vercel.app](https://ai-interviewer-neon.vercel.app) (sign-in required).
 
-### Business Value
+|                            |                                                                                                               |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| **Full stack**             | Next.js 14 (App Router), TypeScript, Tailwind, shadcn/ui, Supabase (Postgres), Clerk auth, deployed on Vercel |
+| **Voice AI**               | Retell for the real-time voice call; OpenAI for question generation, analysis and insights                    |
+| **Validated model output** | Every model reply is parsed against a zod schema before it is stored or shown                                 |
+| **OpenTelemetry**          | Requests and model calls are traced, with model and token usage on each call                                  |
+| **Quality gates**          | Formatting, lint, strict type check, tests and a production build on every push                               |
 
-- **Reduce Time-to-Hire**: Automate initial screening rounds
-- **Scale Recruitment**: Handle multiple candidates simultaneously
-- **Eliminate Bias**: Consistent, objective evaluation criteria
-- **Cost Effective**: Reduce HR workload and interview scheduling overhead
-- **Global Reach**: Support for multiple languages (English & Spanish)
+## How it works
 
-## ✨ Key Features
+```mermaid
+sequenceDiagram
+    actor R as Recruiter
+    actor C as Candidate
+    participant App as Next.js app
+    participant LLM as OpenAI
+    participant Voice as Retell
+    participant DB as Supabase
 
-### 🎯 Intelligent Interview Creation
+    R->>App: role, objective, optional documents
+    App->>LLM: generate questions (JSON)
+    LLM-->>App: questions + description
+    Note over App: reply validated against a zod schema
+    App->>DB: save interview
+    R->>C: share interview link
+    C->>App: open link (no account needed)
+    App->>Voice: register call with the questions
+    Voice-->>C: live voice interview
+    Voice->>App: webhook when the call ends
+    App->>LLM: analyse transcript, generate insights (JSON)
+    Note over App: replies validated, calls traced
+    App->>DB: save response and analysis
+    R->>App: dashboard: transcripts, scores, insights
+```
 
-Generate tailored interview questions instantly from any job description using advanced AI. The system understands job requirements and creates relevant, role-specific questions that assess the right skills and competencies.
+## Model output is validated and traced
 
-### 🎙️ AI Voice Interviews
+The three AI routes go through one helper, [`src/lib/llm/chat.ts`](src/lib/llm/chat.ts):
 
-Conduct natural, conversational interviews with candidates through AI agents Lisa and Bob. These agents adapt their questioning style based on candidate responses, creating a dynamic and engaging interview experience.
+- **Validated.** Each prompt has a zod schema in [`src/lib/llm/schemas.ts`](src/lib/llm/schemas.ts): questions must be a
+  non-empty list, a communication score must be between 0 and 10, a quote's type must be `strength` or
+  `improvement_area`. A reply that does not fit is rejected with a `502` and the list of what was wrong, and is
+  never written to the database.
+- **Traced.** Each call is an OpenTelemetry span carrying the GenAI attributes (`gen_ai.request.model`,
+  `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens`), what the call was for, and whether the reply was
+  valid. [`src/instrumentation.ts`](src/instrumentation.ts) turns tracing on at server start; on Vercel the traces appear in
+  the project's observability view, and `OTEL_EXPORTER_OTLP_ENDPOINT` sends them to any OTLP collector.
+- **Tested.** [`tests/llm.test.ts`](tests/llm.test.ts) runs the helper against a stand-in client: valid replies, four kinds of
+  malformed reply, a provider failure, and the span attributes.
 
-### 📊 Smart Analysis & Scoring
+## Run it
 
-Every response is analyzed using sophisticated AI algorithms that evaluate:
+```bash
+yarn install
+cp .env.example .env.local   # Clerk, Supabase, Retell and OpenAI keys
+# create the tables: run supabase_schema.sql in your Supabase project
+yarn dev                     # http://localhost:3000
+```
 
-- Technical competency
-- Communication skills
-- Cultural fit indicators
-- Overall candidate performance scores
+```bash
+yarn test        # unit tests, no keys or network needed
+yarn typecheck
+yarn lint
+yarn build
+```
 
-### 🔗 Seamless Candidate Experience
+## Layout
 
-Generate unique interview links that candidates can access from anywhere. No downloads or complex setup required - just click and start the interview.
+| Path                   | What it holds                                                                                  |
+| ---------------------- | ---------------------------------------------------------------------------------------------- |
+| `src/app/(client)/`    | Recruiter side: dashboard, interview pages, sign-in                                            |
+| `src/app/(user)/call/` | Candidate side: the public voice-interview page                                                |
+| `src/app/api/`         | Route handlers: question generation, call registration, the Retell webhook, analysis, insights |
+| `src/lib/llm/`         | The validated, traced model-call helper and its schemas                                        |
+| `src/lib/prompts/`     | Prompts, in English and Spanish                                                                |
+| `src/services/`        | Supabase data access                                                                           |
+| `supabase_schema.sql`  | Database schema                                                                                |
+| `tests/`               | Unit tests                                                                                     |
 
-### 📈 Comprehensive Dashboard
+## Status
 
-Track all candidate performances with detailed analytics:
+- The model-reply validation and tracing are covered by unit tests and the production build; they have not yet
+  been exercised against the live services after this change.
+- There are no end-to-end tests of the voice call.
 
-- Interview completion rates
-- Performance metrics and trends
-- Response quality analysis
-- Comparative candidate ranking
+## License
 
-### 🌍 Multi-Language Support
-
-Support for English and Spanish interviews with native-speaking AI agents, enabling global recruitment capabilities.
-
-## 🏗️ Technical Architecture
-
-### Frontend Stack
-
-- **Next.js 14**: Modern React framework with App Router
-- **TypeScript**: Type-safe development
-- **Tailwind CSS**: Utility-first styling
-- **Shadcn/UI**: Modern component library
-- **Framer Motion**: Smooth animations
-
-### Backend & APIs
-
-- **Next.js API Routes**: Serverless backend functions
-- **Supabase**: PostgreSQL database with real-time capabilities
-- **Clerk**: Authentication and user management
-- **OpenAI GPT-4**: Interview question generation and response analysis
-- **Retell AI**: Voice conversation management and audio processing
-
-### Key Integrations
-
-- **Real-time Voice Processing**: Low-latency audio streaming
-- **AI-Powered Analytics**: Advanced natural language processing
-- **Multi-tenant Architecture**: Organization-based user management
-- **Responsive Design**: Works across desktop and mobile devices
-
-## 🎨 User Experience
-
-### For Recruiters
-
-1. **Quick Setup**: Create interviews in minutes, not hours
-2. **Smart Customization**: AI generates relevant questions automatically
-3. **Real-time Monitoring**: Track interview progress as it happens
-4. **Actionable Insights**: Get detailed candidate analysis reports
-
-### For Candidates
-
-1. **Easy Access**: No app downloads or complicated registration
-2. **Natural Conversation**: Talk with AI agents that feel human-like
-3. **Flexible Timing**: Complete interviews at their convenience
-4. **Immediate Feedback**: Know their interview was successfully recorded
-
-## 💼 Business Model
-
-### Freemium Structure
-
-- **Free Tier**: 10 interview responses for small teams
-- **Pro Plan**: Pay-per-response model for scaling organizations
-- **Enterprise**: Custom solutions for large organizations
-
-### Revenue Streams
-
-- Subscription-based pricing
-- Pay-per-interview model
-- Custom integration services
-- White-label solutions
-
-## 📊 Code Quality & Architecture
-
-### Best Practices
-
-- **Type Safety**: Full TypeScript implementation
-- **Component Architecture**: Reusable, modular components
-- **API Design**: RESTful endpoints with proper error handling
-- **Database Design**: Normalized schema with efficient queries
-- **Security**: Authentication, authorization, and data protection
-
-### Performance Optimizations
-
-- **Server-Side Rendering**: Fast initial page loads
-- **Image Optimization**: Automatic image compression and formats
-- **Database Indexing**: Optimized query performance
-- **Caching Strategy**: Efficient data retrieval and storage
-
-## 🌟 Competitive Advantages
-
-1. **Open Source**: Transparent, customizable, and community-driven
-2. **Modern Tech Stack**: Built with latest technologies for scalability
-3. **AI-First Approach**: Leverages cutting-edge AI for superior insights
-4. **Developer-Friendly**: Clean code, comprehensive documentation
-5. **Multi-Language**: Global market reach with localization support
-
-## 🔮 Future Roadmap
-
-- **Avatar Integration**: Visual AI interviewers for enhanced engagement
-- **Advanced Analytics**: Deeper insights with ML-powered recommendations
-- **Integration Ecosystem**: Connect with popular ATS and HR platforms
-- **Mobile Applications**: Native iOS and Android apps
-- **Video Interviews**: Hybrid voice and video interview capabilities
-
-## 🤝 Contributing
-
-We welcome contributions from the developer community! Whether you're fixing bugs, adding features, or improving documentation, your help makes AI-Interviewer better for everyone.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-**Ready to revolutionize your hiring process?** ⚡ AI-Interviewer combines the power of artificial intelligence with modern web technologies to create the future of recruitment.
+MIT

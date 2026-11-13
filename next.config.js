@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Runs src/instrumentation.ts at server start (OpenTelemetry tracing).
+  experimental: { instrumentationHook: true },
   async redirects() {
     return [
       {
