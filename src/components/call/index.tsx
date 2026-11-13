@@ -204,11 +204,8 @@ function Call({ interview }: InterviewProps) {
     };
     setLoading(true);
 
-    const oldUserEmails: string[] = (
-      await ResponseService.getAllEmails(interview.id)
-    ).map((item) => item.email);
     const OldUser =
-      oldUserEmails.includes(email) ||
+      (await ResponseService.emailHasResponded(interview.id, email)) ||
       (interview?.respondents && !interview?.respondents.includes(email));
 
     if (OldUser) {
@@ -255,7 +252,9 @@ function Call({ interview }: InterviewProps) {
       const interviewer = await InterviewerService.getInterviewer(
         interview.interviewer_id,
       );
-      setInterviewerImg(interviewer.image);
+      if (interviewer) {
+        setInterviewerImg(interviewer.image);
+      }
     };
     fetchInterviewer();
     // eslint-disable-next-line react-hooks/exhaustive-deps

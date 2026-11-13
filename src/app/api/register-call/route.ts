@@ -1,5 +1,5 @@
 import { logger } from "@/lib/logger";
-import { InterviewerService } from "@/services/interviewers.service";
+import { getInterviewer } from "@/db/queries/interviewers";
 import { NextResponse } from "next/server";
 import Retell from "retell-sdk";
 
@@ -13,10 +13,16 @@ export async function POST(req: Request, res: Response) {
   const body = await req.json();
 
   const interviewerId = body.interviewer_id;
-  const interviewer = await InterviewerService.getInterviewer(interviewerId);
+  const interviewer = await getInterviewer(interviewerId);
+  if (!interviewer?.agent_id) {
+    return NextResponse.json(
+      { error: "interviewer not found" },
+      { status: 404 },
+    );
+  }
 
   const registerCallResponse = await retellClient.call.createWebCall({
-    agent_id: interviewer?.agent_id,
+    agent_id: interviewer.agent_id,
     retell_llm_dynamic_variables: body.dynamic_data,
   });
 

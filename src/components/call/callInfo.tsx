@@ -88,7 +88,7 @@ function CallInfo({
       try {
         const response = await ResponseService.getResponseByCallId(call_id);
         setEmail(response.email);
-        setName(response.name);
+        setName(response.name ?? "");
         setCandidateStatus(response.candidate_status);
         setInterviewId(response.interview_id);
         setTabSwitchCount(response.tab_switch_count);

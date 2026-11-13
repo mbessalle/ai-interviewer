@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { ResponseService } from "@/services/responses.service";
-import { InterviewService } from "@/services/interviews.service";
+import { getAllResponses } from "@/db/queries/responses";
+import { getInterviewById, updateInterview } from "@/db/queries/interviews";
 import {
   SYSTEM_PROMPT,
   createUserPrompt,
@@ -14,8 +14,11 @@ export async function POST(req: Request) {
   logger.info("generate-insights request received");
   const body = await req.json();
 
-  const responses = await ResponseService.getAllResponses(body.interviewId);
-  const interview = await InterviewService.getInterviewById(body.interviewId);
+  const responses = await getAllResponses(body.interviewId);
+  const interview = await getInterviewById(body.interviewId);
+  if (!interview) {
+    return NextResponse.json({ error: "interview not found" }, { status: 404 });
+  }
 
   let callSummaries = "";
   if (responses) {
@@ -39,10 +42,7 @@ export async function POST(req: Request) {
     });
 
     // Only a validated reply is stored.
-    await InterviewService.updateInterview(
-      { insights: data.insights },
-      body.interviewId,
-    );
+    await updateInterview({ insights: data.insights }, body.interviewId);
 
     logger.info("Insights generated successfully");
 

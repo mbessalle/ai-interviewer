@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import { NextResponse } from "next/server";
-import { InterviewService } from "@/services/interviews.service";
+import { createInterview } from "@/db/queries/interviews";
 import { logger } from "@/lib/logger";
 
 // Use current request host instead of hardcoded URL
@@ -31,7 +31,7 @@ export async function POST(req: Request, res: Response) {
       readableSlug = `${orgNameSlug}-${interviewNameSlug}`;
     }
 
-    const newInterview = await InterviewService.createInterview({
+    const newInterview = await createInterview({
       ...payload,
       url: url,
       id: url_id,

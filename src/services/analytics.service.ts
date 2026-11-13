@@ -1,8 +1,8 @@
 "use server";
 
 import { OpenAI } from "openai";
-import { ResponseService } from "@/services/responses.service";
-import { InterviewService } from "@/services/interviews.service";
+import { getResponseByCallId } from "@/db/queries/responses";
+import { getInterviewById } from "@/db/queries/interviews";
 import { Question } from "@/types/interview";
 import { Analytics } from "@/types/response";
 import {
@@ -18,8 +18,12 @@ export const generateInterviewAnalytics = async (payload: {
   const { callId, interviewId, transcript } = payload;
 
   try {
-    const response = await ResponseService.getResponseByCallId(callId);
-    const interview = await InterviewService.getInterviewById(interviewId);
+    const response = await getResponseByCallId(callId);
+    const interview = await getInterviewById(interviewId);
+
+    if (!response) {
+      return { error: "call not found", status: 404 };
+    }
 
     if (response.analytics) {
       return { analytics: response.analytics as Analytics, status: 200 };

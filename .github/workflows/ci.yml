@@ -13,8 +13,6 @@ jobs:
       # Placeholders so the production build can run; no real service is called in CI.
       NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_ZHVtbXkuY2xlcmsuYWNjb3VudHMuZGV2JA
       CLERK_SECRET_KEY: sk_test_placeholder
-      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder
       RETELL_API_KEY: placeholder
       OPENAI_API_KEY: placeholder
       NEXT_TELEMETRY_DISABLED: 1

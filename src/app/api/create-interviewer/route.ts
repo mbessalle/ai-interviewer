@@ -1,5 +1,9 @@
 import { logger } from "@/lib/logger";
-import { InterviewerService } from "@/services/interviewers.service";
+import { auth } from "@clerk/nextjs/server";
+import {
+  createInterviewer,
+  getAllInterviewers,
+} from "@/db/queries/interviewers";
 import { NextResponse, NextRequest } from "next/server";
 import Retell from "retell-sdk";
 import { INTERVIEWERS, RETELL_AGENT_GENERAL_PROMPT } from "@/lib/constants";
@@ -8,10 +12,23 @@ const retellClient = new Retell({
   apiKey: process.env.RETELL_API_KEY || "",
 });
 
+// Creates paid voice agents, so it must never run while the site is being built.
+export const dynamic = "force-dynamic";
+
 export async function GET(res: NextRequest) {
   logger.info("create-interviewer request received");
 
+  if (!auth().userId) {
+    return NextResponse.json({ error: "sign in first" }, { status: 401 });
+  }
+
   try {
+    // The two default interviewers are created once; asking again returns them.
+    const existing = await getAllInterviewers();
+    if (existing.length > 0) {
+      return NextResponse.json({ interviewers: existing }, { status: 200 });
+    }
+
     const newModel = await retellClient.llm.create({
       model: "gpt-4o",
       general_prompt: RETELL_AGENT_GENERAL_PROMPT,
@@ -32,7 +49,7 @@ export async function GET(res: NextRequest) {
       agent_name: "Lisa",
     });
 
-    const newInterviewer = await InterviewerService.createInterviewer({
+    const newInterviewer = await createInterviewer({
       agent_id: newFirstAgent.agent_id,
       ...INTERVIEWERS.LISA,
     });
@@ -44,7 +61,7 @@ export async function GET(res: NextRequest) {
       agent_name: "Bob",
     });
 
-    const newSecondInterviewer = await InterviewerService.createInterviewer({
+    const newSecondInterviewer = await createInterviewer({
       agent_id: newSecondAgent.agent_id,
       ...INTERVIEWERS.BOB,
     });

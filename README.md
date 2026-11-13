@@ -10,13 +10,14 @@ then sees the transcript, a communication analysis with supporting quotes, and i
 
 Live: [ai-interviewer-neon.vercel.app](https://ai-interviewer-neon.vercel.app) (sign-in required).
 
-|                            |                                                                                                               |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| **Full stack**             | Next.js 14 (App Router), TypeScript, Tailwind, shadcn/ui, Supabase (Postgres), Clerk auth, deployed on Vercel |
-| **Voice AI**               | Retell for the real-time voice call; OpenAI for question generation, analysis and insights                    |
-| **Validated model output** | Every model reply is parsed against a zod schema before it is stored or shown                                 |
-| **OpenTelemetry**          | Requests and model calls are traced, with model and token usage on each call                                  |
-| **Quality gates**          | Formatting, lint, strict type check, tests and a production build on every push                               |
+|                            |                                                                                                                 |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| **Full stack**             | Next.js 14 (App Router), TypeScript, Tailwind, shadcn/ui, Postgres with Drizzle, Clerk auth, deployed on Vercel |
+| **Voice AI**               | Retell for the real-time voice call; OpenAI for question generation, analysis and insights                      |
+| **Validated model output** | Every model reply is parsed against a zod schema before it is stored or shown                                   |
+| **OpenTelemetry**          | Requests and model calls are traced, with model and token usage on each call                                    |
+| **Access rules in code**   | The browser never talks to the database; every server action states who may call it, and tests prove it         |
+| **Quality gates**          | Formatting, lint, strict type check, tests and a production build on every push                                 |
 
 ## How it works
 
@@ -27,7 +28,7 @@ sequenceDiagram
     participant App as Next.js app
     participant LLM as OpenAI
     participant Voice as Retell
-    participant DB as Supabase
+    participant DB as Postgres
 
     R->>App: role, objective, optional documents
     App->>LLM: generate questions (JSON)
@@ -60,17 +61,38 @@ The three AI routes go through one helper, [`src/lib/llm/chat.ts`](src/lib/llm/c
 - **Tested.** [`tests/llm.test.ts`](tests/llm.test.ts) runs the helper against a stand-in client: valid replies, four kinds of
   malformed reply, a provider failure, and the span attributes.
 
+## The browser never talks to the database
+
+Data access is three thin layers:
+
+- **Queries** in [`src/db/queries/`](src/db/queries) are plain typed SQL through Drizzle, against the schema in
+  [`src/db/schema.ts`](src/db/schema.ts). Only server code can import them.
+- **Server actions** in `src/services/*.actions.ts` are what the browser calls. Each one states who may call it,
+  using the Clerk session and never an id sent by the browser ([`src/lib/access.ts`](src/lib/access.ts)):
+  - A recruiter reads and changes only interviews that belong to them or their organization.
+  - A candidate, who has no account, can open an interview, start a response and mark their call as ended.
+    They cannot set their own candidate status or plant analysis results.
+  - "Has this email already answered?" returns yes or no, never the list of other candidates' emails.
+- **Tests** run the real queries against a Postgres that lives inside the test process
+  ([PGlite](https://pglite.dev)), built from the same migration files as production.
+  [`tests/access.test.ts`](tests/access.test.ts) tries each action as a candidate, as a stranger from another
+  organization and as the owner.
+
+Any Postgres works. The deployed app uses a serverless Postgres that wakes on the first query; locally,
+`docker compose up -d postgres` starts one.
+
 ## Run it
 
 ```bash
 yarn install
-cp .env.example .env.local   # Clerk, Supabase, Retell and OpenAI keys
-# create the tables: run supabase_schema.sql in your Supabase project
+cp .env.example .env.local   # Clerk, Retell and OpenAI keys
+docker compose up -d postgres  # a local Postgres (or point DATABASE_URL at any Postgres)
+yarn db:migrate              # create the tables
 yarn dev                     # http://localhost:3000
 ```
 
 ```bash
-yarn test        # unit tests, no keys or network needed
+yarn test        # no keys, network or database server needed
 yarn typecheck
 yarn lint
 yarn build
@@ -85,14 +107,17 @@ yarn build
 | `src/app/api/`         | Route handlers: question generation, call registration, the Retell webhook, analysis, insights |
 | `src/lib/llm/`         | The validated, traced model-call helper and its schemas                                        |
 | `src/lib/prompts/`     | Prompts, in English and Spanish                                                                |
-| `src/services/`        | Supabase data access                                                                           |
-| `supabase_schema.sql`  | Database schema                                                                                |
-| `tests/`               | Unit tests                                                                                     |
+| `src/db/`              | Drizzle schema, the connection and the SQL queries                                             |
+| `src/services/`        | Server actions the browser calls, each with its access rule                                    |
+| `drizzle/`             | SQL migrations, applied on every deploy by `scripts/migrate.mjs`                               |
+| `tests/`               | Tests for the model-call helper, the queries and the access rules                              |
 
 ## Status
 
-- The model-reply validation and tracing are covered by unit tests and the production build; they have not yet
-  been exercised against the live services after this change.
+- Question generation and communication analysis were exercised on a deployed preview and returned valid,
+  validated replies.
+- The queries and access rules are tested against an in-process Postgres and were run once through the
+  production driver against a Postgres 16 server.
 - There are no end-to-end tests of the voice call.
 
 ## License
