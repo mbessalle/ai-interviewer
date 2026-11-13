@@ -1,4 +1,3 @@
-import { OpenAI } from "openai";
 import { NextResponse } from "next/server";
 import { ResponseService } from "@/services/responses.service";
 import { InterviewService } from "@/services/interviews.service";
@@ -7,8 +6,11 @@ import {
   createUserPrompt,
 } from "@/lib/prompts/generate-insights";
 import { logger } from "@/lib/logger";
+import { LlmShapeError, chatJson } from "@/lib/llm/chat";
+import { LLM_MODEL, openaiClient } from "@/lib/llm/client";
+import { InsightsSchema } from "@/lib/llm/schemas";
 
-export async function POST(req: Request, res: Response) {
+export async function POST(req: Request) {
   logger.info("generate-insights request received");
   const body = await req.json();
 
@@ -22,53 +24,38 @@ export async function POST(req: Request, res: Response) {
     });
   }
 
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-    maxRetries: 5,
-    dangerouslyAllowBrowser: true,
-  });
-
   try {
-    const prompt = createUserPrompt(
-      callSummaries,
-      interview.name,
-      interview.objective,
-      interview.description,
-    );
-
-    const baseCompletion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: SYSTEM_PROMPT,
-        },
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-      response_format: { type: "json_object" },
+    const { data, content } = await chatJson(openaiClient(), {
+      model: LLM_MODEL,
+      system: SYSTEM_PROMPT,
+      user: createUserPrompt(
+        callSummaries,
+        interview.name,
+        interview.objective,
+        interview.description,
+      ),
+      purpose: "generate_insights",
+      schema: InsightsSchema,
     });
 
-    const basePromptOutput = baseCompletion.choices[0] || {};
-    const content = basePromptOutput.message?.content || "";
-    const insightsResponse = JSON.parse(content);
-
+    // Only a validated reply is stored.
     await InterviewService.updateInterview(
-      { insights: insightsResponse.insights },
+      { insights: data.insights },
       body.interviewId,
     );
 
     logger.info("Insights generated successfully");
 
-    return NextResponse.json(
-      {
-        response: content,
-      },
-      { status: 200 },
-    );
+    return NextResponse.json({ response: content }, { status: 200 });
   } catch (error) {
+    if (error instanceof LlmShapeError) {
+      logger.error(`Unexpected model reply: ${error.issues.join("; ")}`);
+
+      return NextResponse.json(
+        { error: "model returned an unexpected reply", details: error.issues },
+        { status: 502 },
+      );
+    }
     logger.error("Error generating insights");
 
     return NextResponse.json(
