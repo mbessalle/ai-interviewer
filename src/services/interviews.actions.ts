@@ -2,19 +2,27 @@
 
 import * as interviews from "@/db/queries/interviews";
 import {
+  isMember,
   requireInterviewOwner,
   requireOrganization,
   requireUser,
 } from "@/lib/access";
 
-/** The signed-in user's interviews; ids come from the session, not from the browser. */
+/**
+ * The signed-in user's interviews, plus those of the organization the browser names if the
+ * user really belongs to it. The user id always comes from the session.
+ */
 export async function getAllInterviews(
   _userId: string,
-  _organizationId: string,
+  organizationId: string,
 ) {
   const who = requireUser();
 
-  return interviews.getAllInterviews(who.userId, who.orgId ?? "");
+  const organization = (await isMember(who, organizationId))
+    ? organizationId
+    : "";
+
+  return interviews.getAllInterviews(who.userId, organization);
 }
 
 /** Open to candidates: the call page loads the interview by its link. */
@@ -37,7 +45,7 @@ export async function deleteInterview(id: string) {
 }
 
 export async function deactivateInterviewsByOrgId(organizationId: string) {
-  requireOrganization(organizationId);
+  await requireOrganization(organizationId);
 
   return interviews.deactivateInterviewsByOrgId(organizationId);
 }

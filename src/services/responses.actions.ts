@@ -38,7 +38,7 @@ export async function getAllResponses(interviewId: string) {
 }
 
 export async function getResponseCountByOrganizationId(organizationId: string) {
-  requireOrganization(organizationId);
+  await requireOrganization(organizationId);
 
   return responses.getResponseCountByOrganizationId(organizationId);
 }

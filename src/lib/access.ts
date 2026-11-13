@@ -1,5 +1,5 @@
 import "server-only";
-import { auth } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { getInterviewById } from "@/db/queries/interviews";
 import { getResponseByCallId } from "@/db/queries/responses";
 
@@ -26,17 +26,52 @@ export function requireUser(): Caller & { userId: string } {
   return who as Caller & { userId: string };
 }
 
-/** The signed-in user must be acting for this organization. */
-export function requireOrganization(organizationId: string) {
+const MEMBERSHIP_TTL_MS = 60_000;
+const memberships = new Map<string, { at: number; orgs: Set<string> }>();
+
+/** The organizations a user belongs to, asked from Clerk and remembered for a minute. */
+async function organizationsOf(userId: string): Promise<Set<string>> {
+  const known = memberships.get(userId);
+  if (known && Date.now() - known.at < MEMBERSHIP_TTL_MS) {
+    return known.orgs;
+  }
+  const { data } = await clerkClient().users.getOrganizationMembershipList({
+    userId,
+    limit: 100,
+  });
+  const orgs = new Set(data.map((membership) => membership.organization.id));
+  memberships.set(userId, { at: Date.now(), orgs });
+
+  return orgs;
+}
+
+/**
+ * Whether the caller belongs to the organization. The organization that is active in the
+ * session answers without a network call; otherwise Clerk is asked for the user's
+ * memberships, because the browser's selected organization is not always in the session.
+ */
+export async function isMember(who: Caller, organizationId?: string | null) {
+  if (!who.userId || !organizationId) {
+    return false;
+  }
+  if (who.orgId === organizationId) {
+    return true;
+  }
+
+  return (await organizationsOf(who.userId)).has(organizationId);
+}
+
+/** The signed-in user must belong to this organization. */
+export async function requireOrganization(organizationId: string) {
   const who = requireUser();
-  if (!organizationId || who.orgId !== organizationId) {
+  if (!(await isMember(who, organizationId))) {
     throw new AccessError("This organization is not yours");
   }
 
   return who;
 }
 
-export function ownsInterview(
+export async function ownsInterview(
   who: Caller,
   row: { user_id: string | null; organization_id: string | null } | null,
 ) {
@@ -45,15 +80,14 @@ export function ownsInterview(
   }
 
   return (
-    row.user_id === who.userId ||
-    (who.orgId !== null && row.organization_id === who.orgId)
+    row.user_id === who.userId || (await isMember(who, row.organization_id))
   );
 }
 
-/** The interview must belong to the signed-in user or their organization. */
+/** The interview must belong to the signed-in user or one of their organizations. */
 export async function requireInterviewOwner(interviewId: string) {
   const who = requireUser();
-  if (!ownsInterview(who, await getInterviewById(interviewId))) {
+  if (!(await ownsInterview(who, await getInterviewById(interviewId)))) {
     throw new AccessError("This interview is not yours");
   }
 

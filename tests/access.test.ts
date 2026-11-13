@@ -4,12 +4,32 @@ import * as interviewQueries from "@/db/queries/interviews";
 import * as responseQueries from "@/db/queries/responses";
 import { freshDatabase } from "./helpers/database";
 
-/** Who Clerk says is calling; each test sets it. */
+/** Who Clerk says is calling (each test sets it) and which organizations people belong to. */
 const session = vi.hoisted(() => ({
   userId: null as string | null,
   orgId: null as string | null,
 }));
-vi.mock("@clerk/nextjs/server", () => ({ auth: () => session }));
+const MEMBERSHIPS: Record<string, string[]> = {
+  owner: ["org_1"],
+  colleague: ["org_1"],
+  stranger: ["org_2"],
+};
+vi.mock("@clerk/nextjs/server", () => ({
+  auth: () => session,
+  clerkClient: () => ({
+    users: {
+      getOrganizationMembershipList: async ({
+        userId,
+      }: {
+        userId: string;
+      }) => ({
+        data: (MEMBERSHIPS[userId] ?? []).map((id) => ({
+          organization: { id },
+        })),
+      }),
+    },
+  }),
+}));
 
 import * as clientActions from "@/services/clients.actions";
 import * as interviewActions from "@/services/interviews.actions";
@@ -175,5 +195,24 @@ describe("the owner", () => {
     signIn("colleague", "org_1");
 
     expect(await responseActions.getAllResponses("int_1")).toEqual([]);
+  });
+
+  it("works when the session carries no active organization", async () => {
+    signIn("owner", null);
+
+    expect(
+      (await interviewActions.getAllInterviews("owner", "org_1")).map(
+        (interview) => interview.id,
+      ),
+    ).toEqual(["int_1"]);
+    expect(
+      await clientActions.getOrganizationById("org_1", "Acme"),
+    ).toMatchObject({ id: "org_1" });
+  });
+
+  it("is refused an organization they do not belong to", async () => {
+    await expect(
+      clientActions.getOrganizationById("org_2", "Other"),
+    ).rejects.toThrow();
   });
 });

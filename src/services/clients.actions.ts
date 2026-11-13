@@ -1,23 +1,30 @@
 "use server";
 
 import * as clients from "@/db/queries/clients";
-import { requireOrganization, requireUser } from "@/lib/access";
+import { isMember, requireOrganization, requireUser } from "@/lib/access";
 
 export async function updateOrganization(payload: any, id: string) {
-  requireOrganization(id);
+  await requireOrganization(id);
 
   return clients.updateOrganization(payload, id);
 }
 
-/** The signed-in user's own row; the id comes from the session, not from the browser. */
+/**
+ * The signed-in user's own row. The id comes from the session, and the organization sent by
+ * the browser is used only if the user really belongs to it.
+ */
 export async function getClientById(
   _id: string,
   email?: string | null,
-  _organizationId?: string | null,
+  organizationId?: string | null,
 ) {
   const who = requireUser();
 
-  return clients.getClientById(who.userId, email, who.orgId);
+  const organization = (await isMember(who, organizationId))
+    ? organizationId
+    : who.orgId;
+
+  return clients.getClientById(who.userId, email, organization);
 }
 
 export async function getOrganizationById(
@@ -27,7 +34,7 @@ export async function getOrganizationById(
   if (!organizationId) {
     return null;
   }
-  requireOrganization(organizationId);
+  await requireOrganization(organizationId);
 
   return clients.getOrganizationById(organizationId, organizationName);
 }
