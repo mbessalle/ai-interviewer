@@ -1,10 +1,13 @@
 import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
 import { Retell } from "retell-sdk";
+import { tracedRoute } from "@/lib/trace/route";
 
 const apiKey = process.env.RETELL_API_KEY || "";
 
-export async function POST(req: NextRequest, res: NextResponse) {
+export const POST = tracedRoute("response-webhook", handle);
+
+async function handle(req: NextRequest) {
   if (req.method !== "POST") {
     return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
   }

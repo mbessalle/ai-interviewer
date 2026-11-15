@@ -78,6 +78,21 @@ Required in `.env.local` (see `.env.example`):
 - `RETELL_API_KEY` - Voice interview orchestration
 - `NEXT_PUBLIC_LIVE_URL` - Application URL for interview links
 
+## Checking what happened (do this before explaining or changing anything)
+
+Every step's input and output is stored in the `trace_event` table (`src/lib/trace/`). Read it instead of guessing:
+
+```bash
+set -a; . ./.env.neon.local; set +a                 # DATABASE_URL of the live database
+node scripts/trace.mjs --last 30m --no-db           # what just happened
+node scripts/trace.mjs --call <call_id> --full      # one call, every step, nothing shortened
+node scripts/live-check.mjs                         # end to end: every interview's link vs what the call got
+```
+
+- After every deploy that touches the call path, run `scripts/live-check.mjs` (needs `RETELL_API_KEY` too) and read its output.
+- A new API route goes through `tracedRoute`, a new server action through `tracedAction`, a new outside call through `traced`.
+- On this machine, scripts that reach Neon need `NODE_OPTIONS="--dns-result-order=ipv4first --no-network-family-autoselection"`.
+
 ## Code Patterns
 
 - Client components call `XService.method()`, which are server actions; API routes import from `@/db/queries/*` directly

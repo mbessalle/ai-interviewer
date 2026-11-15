@@ -9,8 +9,11 @@ import { logger } from "@/lib/logger";
 import { LlmShapeError, chatJson } from "@/lib/llm/chat";
 import { LLM_MODEL, openaiClient } from "@/lib/llm/client";
 import { InsightsSchema } from "@/lib/llm/schemas";
+import { tracedRoute } from "@/lib/trace/route";
 
-export async function POST(req: Request) {
+export const POST = tracedRoute("generate-insights", handle);
+
+async function handle(req: Request) {
   logger.info("generate-insights request received");
   const body = await req.json();
 

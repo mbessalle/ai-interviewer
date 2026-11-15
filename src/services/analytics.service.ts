@@ -3,6 +3,7 @@
 import { OpenAI } from "openai";
 import { getResponseByCallId } from "@/db/queries/responses";
 import { getInterviewById } from "@/db/queries/interviews";
+import { traced } from "@/lib/trace/record";
 import { Question } from "@/types/interview";
 import { Analytics } from "@/types/response";
 import {
@@ -46,20 +47,28 @@ export const generateInterviewAnalytics = async (payload: {
       mainInterviewQuestions,
     );
 
-    const baseCompletion = await openai.chat.completions.create({
+    const request = {
       model: "gpt-4o",
       messages: [
-        {
-          role: "system",
-          content: SYSTEM_PROMPT,
-        },
-        {
-          role: "user",
-          content: prompt,
-        },
+        { role: "system" as const, content: SYSTEM_PROMPT },
+        { role: "user" as const, content: prompt },
       ],
-      response_format: { type: "json_object" },
-    });
+    };
+    const baseCompletion = await traced(
+      "openai",
+      "interview_analytics",
+      { ...request, call_id: callId, interview_id: interviewId },
+      () =>
+        openai.chat.completions.create({
+          ...request,
+          response_format: { type: "json_object" },
+        }),
+      (reply) => ({
+        model: reply.model,
+        usage: reply.usage,
+        content: reply.choices[0]?.message?.content ?? "",
+      }),
+    );
 
     const basePromptOutput = baseCompletion.choices[0] || {};
     const content = basePromptOutput.message?.content || "";

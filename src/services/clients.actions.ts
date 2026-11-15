@@ -2,11 +2,18 @@
 
 import * as clients from "@/db/queries/clients";
 import { isMember, requireOrganization, requireUser } from "@/lib/access";
+import { tracedAction } from "@/lib/trace/record";
 
 export async function updateOrganization(payload: any, id: string) {
-  await requireOrganization(id);
+  return tracedAction(
+    "clients.updateOrganization",
+    { payload, organization_id: id },
+    async () => {
+      await requireOrganization(id);
 
-  return clients.updateOrganization(payload, id);
+      return clients.updateOrganization(payload, id);
+    },
+  );
 }
 
 /**
@@ -18,23 +25,35 @@ export async function getClientById(
   email?: string | null,
   organizationId?: string | null,
 ) {
-  const who = requireUser();
+  return tracedAction(
+    "clients.getClientById",
+    { email, organization_id: organizationId },
+    async () => {
+      const who = requireUser();
 
-  const organization = (await isMember(who, organizationId))
-    ? organizationId
-    : who.orgId;
+      const organization = (await isMember(who, organizationId))
+        ? organizationId
+        : who.orgId;
 
-  return clients.getClientById(who.userId, email, organization);
+      return clients.getClientById(who.userId, email, organization);
+    },
+  );
 }
 
 export async function getOrganizationById(
   organizationId?: string,
   organizationName?: string,
 ) {
-  if (!organizationId) {
-    return null;
-  }
-  await requireOrganization(organizationId);
+  return tracedAction(
+    "clients.getOrganizationById",
+    { organization_id: organizationId, organization_name: organizationName },
+    async () => {
+      if (!organizationId) {
+        return null;
+      }
+      await requireOrganization(organizationId);
 
-  return clients.getOrganizationById(organizationId, organizationName);
+      return clients.getOrganizationById(organizationId, organizationName);
+    },
+  );
 }

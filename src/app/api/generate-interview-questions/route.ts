@@ -7,10 +7,13 @@ import { logger } from "@/lib/logger";
 import { LlmShapeError, chatJson } from "@/lib/llm/chat";
 import { LLM_MODEL, openaiClient } from "@/lib/llm/client";
 import { GeneratedQuestionsSchema } from "@/lib/llm/schemas";
+import { tracedRoute } from "@/lib/trace/route";
 
 export const maxDuration = 60;
 
-export async function POST(req: Request) {
+export const POST = tracedRoute("generate-interview-questions", handle);
+
+async function handle(req: Request) {
   logger.info("generate-interview-questions request received");
   const body = await req.json();
 

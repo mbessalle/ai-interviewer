@@ -7,6 +7,8 @@ import {
 import { NextResponse, NextRequest } from "next/server";
 import Retell from "retell-sdk";
 import { INTERVIEWERS, RETELL_AGENT_GENERAL_PROMPT } from "@/lib/constants";
+import { traced } from "@/lib/trace/record";
+import { tracedRoute } from "@/lib/trace/route";
 
 const retellClient = new Retell({
   apiKey: process.env.RETELL_API_KEY || "",
@@ -15,7 +17,9 @@ const retellClient = new Retell({
 // Creates paid voice agents, so it must never run while the site is being built.
 export const dynamic = "force-dynamic";
 
-export async function GET(res: NextRequest) {
+export const GET = tracedRoute("create-interviewer", handle);
+
+async function handle(_req: NextRequest) {
   logger.info("create-interviewer request received");
 
   if (!auth().userId) {
@@ -29,26 +33,41 @@ export async function GET(res: NextRequest) {
       return NextResponse.json({ interviewers: existing }, { status: 200 });
     }
 
-    const newModel = await retellClient.llm.create({
+    const modelRequest = {
       // Retell no longer offers gpt-4o; this matches the model the existing agents use.
-      model: "gpt-5.1",
+      model: "gpt-5.1" as const,
       general_prompt: RETELL_AGENT_GENERAL_PROMPT,
       general_tools: [
         {
-          type: "end_call",
+          type: "end_call" as const,
           name: "end_call_1",
           description:
             "End the call only when ALL the predefined questions have been asked and answered. Use this to conclude the interview professionally.",
         },
       ],
+    };
+    const newModel = await traced("retell", "create-llm", modelRequest, () =>
+      retellClient.llm.create(modelRequest),
+    );
+
+    const agentRequest = (agent_name: string, voice_id: string) => ({
+      response_engine: {
+        llm_id: newModel.llm_id,
+        type: "retell-llm" as const,
+      },
+      voice_id,
+      agent_name,
     });
+    const createAgent = (agent_name: string, voice_id: string) => {
+      const request = agentRequest(agent_name, voice_id);
+
+      return traced("retell", "create-agent", request, () =>
+        retellClient.agent.create(request),
+      );
+    };
 
     // Create Lisa
-    const newFirstAgent = await retellClient.agent.create({
-      response_engine: { llm_id: newModel.llm_id, type: "retell-llm" },
-      voice_id: "11labs-Chloe",
-      agent_name: "Lisa",
-    });
+    const newFirstAgent = await createAgent("Lisa", "11labs-Chloe");
 
     const newInterviewer = await createInterviewer({
       agent_id: newFirstAgent.agent_id,
@@ -56,11 +75,7 @@ export async function GET(res: NextRequest) {
     });
 
     // Create Bob
-    const newSecondAgent = await retellClient.agent.create({
-      response_engine: { llm_id: newModel.llm_id, type: "retell-llm" },
-      voice_id: "11labs-Brian",
-      agent_name: "Bob",
-    });
+    const newSecondAgent = await createAgent("Bob", "11labs-Brian");
 
     const newSecondInterviewer = await createInterviewer({
       agent_id: newSecondAgent.agent_id,

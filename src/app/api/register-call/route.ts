@@ -2,6 +2,8 @@ import { logger } from "@/lib/logger";
 import { getInterviewer } from "@/db/queries/interviewers";
 import { getInterviewById } from "@/db/queries/interviews";
 import { callLanguage } from "@/lib/call-language";
+import { traced } from "@/lib/trace/record";
+import { tracedRoute } from "@/lib/trace/route";
 import { NextResponse } from "next/server";
 import Retell from "retell-sdk";
 
@@ -9,7 +11,9 @@ const retellClient = new Retell({
   apiKey: process.env.RETELL_API_KEY || "",
 });
 
-export async function POST(req: Request, res: Response) {
+export const POST = tracedRoute("register-call", handle);
+
+async function handle(req: Request) {
   logger.info("register-call request received");
 
   const body = await req.json();
@@ -32,14 +36,25 @@ export async function POST(req: Request, res: Response) {
     interviewer.name,
   );
 
-  const registerCallResponse = await retellClient.call.createWebCall({
+  const request = {
     agent_id: interviewer.agent_id,
     agent_override: agentOverride,
     retell_llm_dynamic_variables: {
       ...body.dynamic_data,
       language: languageName,
     },
-  });
+  };
+  const registerCallResponse = await traced(
+    "retell",
+    "create-web-call",
+    {
+      ...request,
+      // Not sent to Retell: kept so the trace shows which interview the call is for.
+      interview_id: interview?.id ?? null,
+      interviewer: interviewer.name,
+    },
+    () => retellClient.call.createWebCall(request),
+  );
 
   logger.info("Call registered successfully");
 

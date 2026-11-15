@@ -11,6 +11,8 @@
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node scripts/migrate.mjs",
+    "trace": "node scripts/trace.mjs",
+    "check:live": "node scripts/live-check.mjs",
     "vercel-build": "node scripts/migrate.mjs && next build"
   },
   "dependencies": {

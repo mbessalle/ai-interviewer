@@ -65,6 +65,37 @@ The three AI routes go through one helper, [`src/lib/llm/chat.ts`](src/lib/llm/c
 - **Tested.** [`tests/llm.test.ts`](tests/llm.test.ts) runs the helper against a stand-in client: valid replies, four kinds of
   malformed reply, a provider failure, and the span attributes.
 
+## Every input and output is recorded
+
+A call crosses the browser, eight API routes, the server actions, Postgres, OpenAI and Retell. When one goes
+wrong, the question is always "what did each step receive and what did it return". That is stored, per step, in a
+`trace_event` table by [`src/lib/trace/`](src/lib/trace):
+
+| Step      | What is recorded                                                                         |
+| --------- | ---------------------------------------------------------------------------------------- |
+| `route`   | Request body, response body and status of every API route                                |
+| `action`  | Arguments and result of every server action                                              |
+| `retell`  | The request sent to the voice provider (agent, language, voice, variables) and its reply |
+| `openai`  | The full prompt and the full reply of every model call, with token usage                 |
+| `db`      | Every SQL statement and its parameters                                                   |
+| `browser` | Which interview a link opened, and when the call started, ended or failed                |
+
+Each step is also an OpenTelemetry span, so the same chain appears in any OTLP backend. Steps of one request share
+a trace id; steps of one call share its `call_id`, which is how separate requests are read as one story:
+
+```bash
+node scripts/trace.mjs --call call_abc123      # everything about one call, in order
+node scripts/trace.mjs --last 30m --errors     # what failed in the last half hour
+```
+
+Credentials (tokens, keys, signatures) are replaced before storing, a storage failure never reaches the request it
+describes, and `--prune 30d` deletes old steps. The table holds what the app already stores (names, emails,
+transcripts), so it has the same audience: whoever can read the database.
+
+[`scripts/live-check.mjs`](scripts/live-check.mjs) uses this to check a deployment end to end: for every interview it
+opens the link the dashboard shows, starts a call through the site, and compares what Retell and the trace say the
+call got with the interviewer and language the recruiter chose.
+
 ## The browser never talks to the database
 
 Data access is three thin layers:
