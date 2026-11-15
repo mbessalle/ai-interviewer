@@ -216,7 +216,11 @@ function Call({ interview }: InterviewProps) {
     } else {
       const registerCallResponse: registerCallResponseType = await axios.post(
         "/api/register-call",
-        { dynamic_data: data, interviewer_id: interview?.interviewer_id },
+        {
+          dynamic_data: data,
+          interviewer_id: interview?.interviewer_id,
+          interview_id: interview?.id,
+        },
       );
       if (registerCallResponse.data.registerCallResponse.access_token) {
         const registered = registerCallResponse.data.registerCallResponse;
