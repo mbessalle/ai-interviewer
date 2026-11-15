@@ -1,5 +1,6 @@
 import { SpanStatusCode, trace } from "@opentelemetry/api";
 import type { ZodType } from "zod";
+import { tracedInSpan } from "@/lib/trace/record";
 
 /** The part of the OpenAI client this module uses, so tests can pass a plain object. */
 export interface ChatClient {
@@ -64,14 +65,27 @@ export async function chatJson<T>(
     });
 
     try {
-      const completion = await client.chat.completions.create({
-        model: request.model,
-        messages: [
-          { role: "system", content: request.system },
-          { role: "user", content: request.user },
-        ],
-        response_format: { type: "json_object" },
-      });
+      const messages = [
+        { role: "system" as const, content: request.system },
+        { role: "user" as const, content: request.user },
+      ];
+      // The prompt that was sent and the reply that came back, in full.
+      const completion = await tracedInSpan(
+        "openai",
+        request.purpose,
+        { model: request.model, messages },
+        () =>
+          client.chat.completions.create({
+            model: request.model,
+            messages,
+            response_format: { type: "json_object" },
+          }),
+        (reply) => ({
+          model: reply.model,
+          usage: reply.usage,
+          content: reply.choices[0]?.message?.content ?? "",
+        }),
+      );
 
       if (completion.usage) {
         span.setAttributes({

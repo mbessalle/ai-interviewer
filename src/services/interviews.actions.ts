@@ -7,6 +7,7 @@ import {
   requireOrganization,
   requireUser,
 } from "@/lib/access";
+import { tracedAction } from "@/lib/trace/record";
 
 /**
  * The signed-in user's interviews, plus those of the organization the browser names if the
@@ -16,36 +17,62 @@ export async function getAllInterviews(
   _userId: string,
   organizationId: string,
 ) {
-  const who = requireUser();
+  return tracedAction(
+    "interviews.getAllInterviews",
+    { organization_id: organizationId },
+    async () => {
+      const who = requireUser();
 
-  const organization = (await isMember(who, organizationId))
-    ? organizationId
-    : "";
+      const organization = (await isMember(who, organizationId))
+        ? organizationId
+        : "";
 
-  return interviews.getAllInterviews(who.userId, organization);
+      return interviews.getAllInterviews(who.userId, organization);
+    },
+  );
 }
 
 /** Open to candidates: the call page loads the interview by its link. */
 export async function getInterviewById(id: string) {
-  return interviews.getInterviewById(id);
+  return tracedAction("interviews.getInterviewById", { link_or_id: id }, () =>
+    interviews.getInterviewById(id),
+  );
 }
 
 export async function updateInterview(payload: any, id: string) {
-  await requireInterviewOwner(id);
-  // Ownership is not something an edit may change.
-  const { user_id, organization_id, ...changes } = payload ?? {};
+  return tracedAction(
+    "interviews.updateInterview",
+    { payload, interview_id: id },
+    async () => {
+      await requireInterviewOwner(id);
+      // Ownership is not something an edit may change.
+      const { user_id, organization_id, ...changes } = payload ?? {};
 
-  return interviews.updateInterview(changes, id);
+      return interviews.updateInterview(changes, id);
+    },
+  );
 }
 
 export async function deleteInterview(id: string) {
-  await requireInterviewOwner(id);
+  return tracedAction(
+    "interviews.deleteInterview",
+    { interview_id: id },
+    async () => {
+      await requireInterviewOwner(id);
 
-  return interviews.deleteInterview(id);
+      return interviews.deleteInterview(id);
+    },
+  );
 }
 
 export async function deactivateInterviewsByOrgId(organizationId: string) {
-  await requireOrganization(organizationId);
+  return tracedAction(
+    "interviews.deactivateInterviewsByOrgId",
+    { organization_id: organizationId },
+    async () => {
+      await requireOrganization(organizationId);
 
-  return interviews.deactivateInterviewsByOrgId(organizationId);
+      return interviews.deactivateInterviewsByOrgId(organizationId);
+    },
+  );
 }

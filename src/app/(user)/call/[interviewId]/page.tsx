@@ -6,6 +6,7 @@ import Call from "@/components/call";
 import Image from "next/image";
 import { ArrowUpRightSquareIcon } from "lucide-react";
 import { Interview } from "@/types/interview";
+import { clientEvent } from "@/lib/trace/client";
 import LoaderWithText from "@/components/loaders/loader-with-text/loaderWithText";
 
 type Props = {
@@ -95,6 +96,18 @@ function InterviewInterface({ params }: Props) {
     const fetchinterview = async () => {
       try {
         const response = await getInterviewById(params.interviewId);
+        // Which interview this link opened: the first thing to check when a call goes
+        // to the wrong interviewer or language.
+        clientEvent("page_opened", {
+          interview_id: response?.id ?? null,
+          data: {
+            link: params.interviewId,
+            found: Boolean(response),
+            interview_name: response?.name,
+            language: response?.language,
+            interviewer_id: response ? Number(response.interviewer_id) : null,
+          },
+        });
         if (response) {
           setInterview(response);
           document.title = response.name;

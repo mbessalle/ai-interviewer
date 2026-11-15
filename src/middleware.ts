@@ -9,6 +9,10 @@ const isPublicRoute = createRouteMatcher([
   "/api/get-call(.*)",
   "/api/generate-interview-questions(.*)",
   "/api/analyze-communication(.*)",
+  // Browser-side trace events from the candidate page, which has no sign-in.
+  "/api/client-event(.*)",
+  // Called by Retell, not by a signed-in user; the route checks Retell's signature itself.
+  "/api/response-webhook(.*)",
 ]);
 
 const isProtectedRoute = createRouteMatcher([

@@ -7,8 +7,11 @@ import {
 import { LlmShapeError, chatJson } from "@/lib/llm/chat";
 import { LLM_MODEL, openaiClient } from "@/lib/llm/client";
 import { CommunicationAnalysisSchema } from "@/lib/llm/schemas";
+import { tracedRoute } from "@/lib/trace/route";
 
-export async function POST(req: Request) {
+export const POST = tracedRoute("analyze-communication", handle);
+
+async function handle(req: Request) {
   logger.info("analyze-communication request received");
 
   try {

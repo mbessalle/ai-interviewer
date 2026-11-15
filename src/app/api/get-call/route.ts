@@ -1,7 +1,8 @@
 import { logger } from "@/lib/logger";
 import { generateInterviewAnalytics } from "@/services/analytics.service";
 import { getResponseByCallId, updateResponse } from "@/db/queries/responses";
-import { Response } from "@/types/response";
+import { traced } from "@/lib/trace/record";
+import { tracedRoute } from "@/lib/trace/route";
 import { NextResponse } from "next/server";
 import Retell from "retell-sdk";
 
@@ -9,7 +10,9 @@ const retell = new Retell({
   apiKey: process.env.RETELL_API_KEY || "",
 });
 
-export async function POST(req: Request, res: Response) {
+export const POST = tracedRoute("get-call", handle);
+
+async function handle(req: Request) {
   logger.info("get-call request received");
   const body = await req.json();
 
@@ -27,7 +30,12 @@ export async function POST(req: Request, res: Response) {
       { status: 200 },
     );
   }
-  const callOutput = await retell.call.retrieve(body.id);
+  const callOutput = await traced(
+    "retell",
+    "get-call",
+    { call_id: body.id },
+    () => retell.call.retrieve(body.id),
+  );
   const interviewId = callDetails?.interview_id;
   callResponse = callOutput;
   const duration = Math.round(

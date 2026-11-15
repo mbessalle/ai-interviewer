@@ -37,6 +37,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { InterviewerService } from "@/services/interviewers.service";
+import { clientEvent } from "@/lib/trace/client";
 
 const webClient = new RetellWebClient();
 
@@ -87,6 +88,8 @@ function Call({ interview }: InterviewProps) {
   const [currentTimeDuration, setCurrentTimeDuration] = useState<string>("0");
 
   const lastUserResponseRef = useRef<HTMLDivElement | null>(null);
+  // The call id for the voice client's event handlers, which are set up once.
+  const callIdRef = useRef("");
 
   const handleFeedbackSubmit = async (
     formData: Omit<FeedbackData, "interview_id">,
@@ -142,11 +145,19 @@ function Call({ interview }: InterviewProps) {
   useEffect(() => {
     webClient.on("call_started", () => {
       console.log("Call started");
+      clientEvent("call_started", {
+        interview_id: interview.id,
+        call_id: callIdRef.current,
+      });
       setIsCalling(true);
     });
 
     webClient.on("call_ended", () => {
       console.log("Call ended");
+      clientEvent("call_ended", {
+        interview_id: interview.id,
+        call_id: callIdRef.current,
+      });
       setIsCalling(false);
       setIsEnded(true);
     });
@@ -162,6 +173,11 @@ function Call({ interview }: InterviewProps) {
 
     webClient.on("error", (error) => {
       console.error("An error occurred:", error);
+      clientEvent("call_error", {
+        interview_id: interview.id,
+        call_id: callIdRef.current,
+        data: { message: String(error) },
+      });
       webClient.stopCall();
       setIsEnded(true);
       setIsCalling(false);
@@ -186,6 +202,8 @@ function Call({ interview }: InterviewProps) {
       // Clean up event listeners
       webClient.removeAllListeners();
     };
+    // The handlers are attached once; they read the interview this page was opened for.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onEndCallClick = async () => {
@@ -207,12 +225,21 @@ function Call({ interview }: InterviewProps) {
       name: name || "not provided",
     };
     setLoading(true);
+    clientEvent("start_clicked", {
+      interview_id: interview.id,
+      data: {
+        interview_name: interview.name,
+        language: interview.language,
+        interviewer_id: Number(interview.interviewer_id),
+      },
+    });
 
     const OldUser =
       (await ResponseService.emailHasResponded(interview.id, email)) ||
       (interview?.respondents && !interview?.respondents.includes(email));
 
     if (OldUser) {
+      clientEvent("repeat_email_blocked", { interview_id: interview.id });
       setIsOldUser(true);
     } else {
       const registerCallResponse: registerCallResponseType = await axios.post(
@@ -225,6 +252,12 @@ function Call({ interview }: InterviewProps) {
       );
       if (registerCallResponse.data.registerCallResponse.access_token) {
         const registered = registerCallResponse.data.registerCallResponse;
+        callIdRef.current = registered.call_id;
+        clientEvent("call_registered", {
+          interview_id: interview.id,
+          call_id: registered.call_id,
+          data: { transport: registered.transport },
+        });
         await webClient
           .startCall({
             accessToken: registered.access_token,
