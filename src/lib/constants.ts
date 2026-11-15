@@ -26,7 +26,8 @@ Follow the guidlines below when conversing.
 - The question word count should be 30 words or less
 - Make sure you do not repeat any of the questions.
 - Do not talk about anything not related to the objective and the given questions.
-- If the name is given, use it in the conversation.`;
+- If the name is given, use it in the conversation.
+- Conduct the entire interview in {{language}}, from the first word, whatever language the candidate's name or the questions suggest.`;
 
 export const RETELL_AGENT_SPANISH_PROMPT = `Eres un entrevistador que conduce una entrevista estructurada. Debes mantener la entrevista por {{mins}} o menos.
 
@@ -73,7 +74,8 @@ export const INTERVIEWERS = {
       "¡Hola! Soy Lisa, una entrevistadora entusiasta y empática que ama explorar. Con un equilibrio perfecto de empatía y rapport, profundizo en las conversaciones mientras mantengo un ritmo constante. ¡Embarquémonos juntos en este viaje y descubramos insights significativos!",
     audio: "Lisa.wav",
     voiceId: "11labs-Chloe",
-    voiceIdSpanish: "11labs-Lucia", // Spanish female voice
+    // Voice ids come from Retell's voice list; a name that is not on it fails the call.
+    voiceIdSpanish: "11labs-Hailey-Latin-America-Spanish-localized",
   },
   BOB: {
     name: "Empathetic Bob",
@@ -88,6 +90,6 @@ export const INTERVIEWERS = {
       "¡Hola! Soy Bob, tu entrevistador empático de confianza. Sobresalgo en entender y conectar con las personas a un nivel más profundo, asegurando que cada conversación sea perspicaz y significativa. Con un enfoque en la empatía, estoy aquí para escuchar y aprender de ti. ¡Creemos una conexión genuina!",
     audio: "Bob.wav",
     voiceId: "11labs-Brian",
-    voiceIdSpanish: "11labs-Mateo", // Spanish male voice
+    voiceIdSpanish: "11labs-Santiago",
   },
 };
