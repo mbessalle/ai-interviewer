@@ -82,6 +82,9 @@ export const INTERVIEWERS = {
     voiceId: "11labs-Chloe",
     // Voice ids come from Retell's voice list; a name that is not on it fails the call.
     voiceIdSpanish: "11labs-Hailey-Latin-America-Spanish-localized",
+    // This voice stays silent on the agent's own voice model (eleven_v4): the call
+    // connects, the model answers, and no audio comes out. It needs its own model.
+    voiceModelSpanish: "eleven_multilingual_v2",
   },
   BOB: {
     name: "Empathetic Bob",
@@ -97,5 +100,7 @@ export const INTERVIEWERS = {
     audio: "Bob.wav",
     voiceId: "11labs-Brian",
     voiceIdSpanish: "11labs-Santiago",
+    // Works on the agent's own voice model, so nothing is overridden.
+    voiceModelSpanish: undefined,
   },
 };

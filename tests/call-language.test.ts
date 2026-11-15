@@ -24,13 +24,16 @@ describe("callLanguage", () => {
     const bob = callLanguage("es", INTERVIEWERS.BOB.name);
 
     expect(lisa.languageName).toBe("Spanish");
+    // Lisa's Spanish voice is silent on the agent's own voice model, so it brings one.
     expect(lisa.agentOverride.agent).toEqual({
       language: "es-419",
       voice_id: INTERVIEWERS.LISA.voiceIdSpanish,
+      voice_model: INTERVIEWERS.LISA.voiceModelSpanish,
     });
-    expect(bob.agentOverride.agent.voice_id).toBe(
-      INTERVIEWERS.BOB.voiceIdSpanish,
-    );
+    expect(bob.agentOverride.agent).toEqual({
+      language: "es-419",
+      voice_id: INTERVIEWERS.BOB.voiceIdSpanish,
+    });
     expect(bob.agentOverride.agent.voice_id).not.toBe(
       lisa.agentOverride.agent.voice_id,
     );
