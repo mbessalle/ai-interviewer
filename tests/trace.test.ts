@@ -25,6 +25,7 @@ describe("what is safe to store", () => {
         access_token: "abc",
         nested: { Authorization: "Bearer x", apiKey: "k", name: "Ana" },
         list: [{ client_secret: "s", ok: 1 }],
+        ice_servers: [{ urls: "turn:x", username: "u", credential: "c" }],
       }),
     ).toEqual({
       access_token: "[redacted]",
@@ -34,6 +35,9 @@ describe("what is safe to store", () => {
         name: "Ana",
       },
       list: [{ client_secret: "[redacted]", ok: 1 }],
+      ice_servers: [
+        { urls: "turn:x", username: "u", credential: "[redacted]" },
+      ],
     });
   });
 

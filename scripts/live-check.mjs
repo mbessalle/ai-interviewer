@@ -12,7 +12,7 @@
 import postgres from "postgres";
 
 const BASE_URL = (
-  process.env.BASE_URL ?? "https://ai-interviewer-neon.vercel.app"
+  process.env.BASE_URL || "https://ai-interviewer-neon.vercel.app"
 ).replace(/\/$/, "");
 const SPOKEN = { en: "English", es: "Spanish" };
 const SPEECH = { en: "en-US", es: "es-419" };
@@ -162,7 +162,10 @@ try {
       "trace: no credential was stored",
       !JSON.stringify(steps).includes(process.env.RETELL_API_KEY) &&
         route?.output?.body?.registerCallResponse?.access_token ===
-          "[redacted]",
+          "[redacted]" &&
+        (sent?.output?.ice_servers ?? []).every(
+          (server) => server.credential === "[redacted]",
+        ),
     );
   }
 } finally {

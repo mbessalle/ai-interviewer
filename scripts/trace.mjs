@@ -58,7 +58,12 @@ try {
     const kinds = value("kind")?.split(",");
     const filters = [
       value("call") && sql`call_id = ${value("call")}`,
-      value("interview") && sql`interview_id = ${value("interview")}`,
+      // An interview's steps, plus every step of the calls made for it (some steps only
+      // know the call, or know the interview by its link name).
+      value("interview") &&
+        sql`(interview_id = ${value("interview")} or call_id in (
+          select call_id from trace_event
+          where interview_id = ${value("interview")} and call_id is not null))`,
       value("trace") && sql`trace_id = ${value("trace")}`,
       value("last") && sql`at > now() - ${interval(value("last"))}::interval`,
       kinds && sql`kind in ${sql(kinds)}`,
