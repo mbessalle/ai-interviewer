@@ -14,9 +14,10 @@ Live: [ai-interviewer-neon.vercel.app](https://ai-interviewer-neon.vercel.app) (
 | :-------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------: |
 | <img src="docs/img/dashboard.jpg" alt="Dashboard with one interview" width="260"> | <img src="docs/img/generated-questions.jpg" alt="Questions generated for a Senior AI Engineer interview" width="260"> | <img src="docs/img/candidate-page.jpg" alt="The page a candidate opens to start the voice interview" width="260"> |
 
-After a call, each question gets its own summary of what the candidate actually said and what was missing:
+After a call the recruiter gets a hiring score, a communication score, a summary of the call and a summary of
+each answer. This is a real five-minute interview held in Spanish:
 
-<img src="docs/img/question-summary.jpg" alt="Per-question summary of a candidate's answers after a real five-minute interview" width="820">
+<img src="docs/img/results.jpg" alt="Results of a real interview held in Spanish: hiring score 82, communication 8 out of 10, call summary and per-question summaries" width="820">
 
 |                            |                                                                                                                 |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------- |

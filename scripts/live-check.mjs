@@ -79,6 +79,13 @@ try {
     new Set(links).size === links.length,
   );
 
+  const missing = await fetch(`${BASE_URL}/call/no-such-interview-link`);
+  check(
+    "a link to an interview that does not exist answers 404",
+    missing.status === 404,
+    `status ${missing.status}`,
+  );
+
   for (const interview of interviews) {
     const link = interview.readable_slug ?? interview.id;
     const language = interview.language ?? "en";
