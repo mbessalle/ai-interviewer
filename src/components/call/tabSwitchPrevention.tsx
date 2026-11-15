@@ -9,11 +9,16 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-const useTabSwitchPrevention = () => {
+/** Counts and warns about tab switches, only while `active` (the call is running). */
+const useTabSwitchPrevention = (active = true) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [tabSwitchCount, setTabSwitchCount] = useState(0);
 
   useEffect(() => {
+    if (!active) {
+      return;
+    }
+
     const handleVisibilityChange = () => {
       if (document.hidden) {
         setIsDialogOpen(true);
@@ -26,7 +31,7 @@ const useTabSwitchPrevention = () => {
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, []);
+  }, [active]);
 
   const handleUnderstand = () => {
     setIsDialogOpen(false);
