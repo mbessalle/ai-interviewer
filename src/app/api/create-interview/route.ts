@@ -1,7 +1,8 @@
 import { nanoid } from "nanoid";
 import { NextResponse } from "next/server";
-import { createInterview } from "@/db/queries/interviews";
+import { createInterview, readableSlugTaken } from "@/db/queries/interviews";
 import { logger } from "@/lib/logger";
+import { readableSlug, uniqueSlug } from "@/lib/slug";
 
 // Use current request host instead of hardcoded URL
 const getBaseUrl = (req: Request) => {
@@ -22,20 +23,17 @@ export async function POST(req: Request, res: Response) {
 
     const payload = body.interviewData;
 
-    let readableSlug = null;
-    if (body.organizationName) {
-      const interviewNameSlug = payload.name?.toLowerCase().replace(/\s/g, "-");
-      const orgNameSlug = body.organizationName
-        ?.toLowerCase()
-        .replace(/\s/g, "-");
-      readableSlug = `${orgNameSlug}-${interviewNameSlug}`;
-    }
+    // Two interviews may share a name, but never a link.
+    const base = body.organizationName
+      ? readableSlug(body.organizationName, payload.name)
+      : "";
+    const slug = base ? await uniqueSlug(base, readableSlugTaken) : null;
 
     const newInterview = await createInterview({
       ...payload,
       url: url,
       id: url_id,
-      readable_slug: readableSlug,
+      readable_slug: slug,
     });
 
     logger.info("Interview created successfully");

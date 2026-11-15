@@ -1,4 +1,4 @@
-import { and, desc, eq, or } from "drizzle-orm";
+import { and, desc, eq, or, sql } from "drizzle-orm";
 import { getDb } from "../client";
 import { columnsOnly } from "../columns";
 import { feedback, interview, response } from "../schema";
@@ -24,14 +24,30 @@ export async function getAllInterviews(
   return rows as unknown as Interview[];
 }
 
-/** Looks an interview up by its id or by its readable slug. */
+/**
+ * Looks an interview up by its id or by its readable slug. An id match wins over a slug
+ * match, so the answer never depends on the order the database returns rows in.
+ */
 export async function getInterviewById(id: string): Promise<Interview | null> {
   const [row] = await getDb()
     .select()
     .from(interview)
-    .where(or(eq(interview.id, id), eq(interview.readable_slug, id)));
+    .where(or(eq(interview.id, id), eq(interview.readable_slug, id)))
+    .orderBy(sql`(${interview.id} = ${id}) desc`, interview.created_at)
+    .limit(1);
 
   return (row as unknown as Interview) ?? null;
+}
+
+/** Whether an interview already uses this link name. */
+export async function readableSlugTaken(slug: string): Promise<boolean> {
+  const [row] = await getDb()
+    .select({ id: interview.id })
+    .from(interview)
+    .where(eq(interview.readable_slug, slug))
+    .limit(1);
+
+  return Boolean(row);
 }
 
 export async function updateInterview(payload: any, id: string) {
