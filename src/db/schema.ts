@@ -75,7 +75,8 @@ export const interview = pgTable("interview", {
   logo_url: text("logo_url"),
   theme_color: text("theme_color"),
   url: text("url"),
-  readable_slug: text("readable_slug"),
+  // Unique: the link name alone must identify one interview.
+  readable_slug: text("readable_slug").unique(),
   questions: jsonb("questions").$type<any>(),
   quotes: jsonb("quotes").$type<any>().array(),
   insights: text("insights").array(),
