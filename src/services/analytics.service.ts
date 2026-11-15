@@ -3,6 +3,7 @@
 import { OpenAI } from "openai";
 import { getResponseByCallId } from "@/db/queries/responses";
 import { getInterviewById } from "@/db/queries/interviews";
+import { LLM_MODEL } from "@/lib/llm/client";
 import { traced } from "@/lib/trace/record";
 import { Question } from "@/types/interview";
 import { Analytics } from "@/types/response";
@@ -48,7 +49,7 @@ export const generateInterviewAnalytics = async (payload: {
     );
 
     const request = {
-      model: "gpt-4o",
+      model: LLM_MODEL,
       messages: [
         { role: "system" as const, content: SYSTEM_PROMPT },
         { role: "user" as const, content: prompt },

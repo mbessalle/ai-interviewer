@@ -34,8 +34,8 @@ async function handle(_req: NextRequest) {
     }
 
     const modelRequest = {
-      // Retell no longer offers gpt-4o; this matches the model the existing agents use.
-      model: "gpt-5.1" as const,
+      // The same model the live agents use.
+      model: "gpt-6.1-sol" as const,
       general_prompt: RETELL_AGENT_GENERAL_PROMPT,
       general_tools: [
         {

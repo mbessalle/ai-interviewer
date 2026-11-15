@@ -41,6 +41,21 @@ describe("what is safe to store", () => {
     });
   });
 
+  it("keeps token counts, which are numbers and not credentials", () => {
+    const usage = {
+      prompt_tokens: 900,
+      completion_tokens: 120,
+      total_tokens: 1020,
+      prompt_tokens_details: { cached_tokens: 0 },
+    };
+
+    expect(safe({ usage, refresh_token: "r", sessionToken: "s" })).toEqual({
+      usage,
+      refresh_token: "[redacted]",
+      sessionToken: "[redacted]",
+    });
+  });
+
   it("cuts runaway text and says how long it was", () => {
     const cut = safe("x".repeat(MAX_TEXT + 50)) as string;
 

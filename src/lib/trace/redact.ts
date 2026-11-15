@@ -3,9 +3,12 @@
  * and very long text cut. Pure, so it is tested on its own.
  */
 
-/** Keys whose values are credentials. They are replaced, never stored. */
+/**
+ * Keys whose values are credentials. They are replaced, never stored. "token" counts only
+ * in the singular: `access_token` is a credential, `prompt_tokens` is a number worth keeping.
+ */
 const SECRET_KEY =
-  /token|secret|password|credential|authorization|api[-_]?key|cookie|signature/i;
+  /token(?!s)|secret|password|credential|authorization|api[-_]?key|cookie|signature/i;
 
 /** Longest text kept per field. Transcripts fit; a runaway payload does not fill the table. */
 export const MAX_TEXT = 20_000;

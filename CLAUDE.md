@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-AI-Interviewer is an AI-powered voice interview platform for hiring. It enables recruiters to create interviews with AI-generated questions, and candidates complete voice interviews with AI agents (Lisa/Bob) powered by Retell AI. Responses are analyzed using OpenAI GPT-4o.
+AI-Interviewer is an AI-powered voice interview platform for hiring. It enables recruiters to create interviews with AI-generated questions, and candidates complete voice interviews with AI agents (Lisa/Bob) powered by Retell AI. Responses are analyzed using OpenAI GPT-6.1 Sol (`LLM_MODEL` overrides it).
 
 ## Development Commands
 
@@ -24,7 +24,7 @@ npx prettier --write .
 - **Framework**: Next.js 14 with App Router, TypeScript
 - **Database**: Postgres through Drizzle ORM (`DATABASE_URL`); the browser never queries it directly
 - **Auth**: Clerk (user & organization management)
-- **AI**: OpenAI GPT-4o (questions/analysis), Retell AI (voice conversations)
+- **AI**: OpenAI GPT-6.1 Sol (questions/analysis, and the voice agent's thinking model in Retell), Retell AI (voice conversations)
 - **UI**: Tailwind CSS, Shadcn/UI, Radix UI
 - **State**: React Context + TanStack React Query
 
