@@ -42,6 +42,19 @@ describe("callLanguage", () => {
     }
   });
 
+  it("has a prompt that asks about a gap only when needed, and only about the gap", () => {
+    for (const rule of [
+      "Ask ONLY if the gap leaves out something you need",
+      "Ask about the missing piece only",
+      "Do NOT repeat the question",
+      "never state the cause as a fact",
+      "Ask once per answer",
+      "Never pretend to have understood",
+    ]) {
+      expect(RETELL_AGENT_GENERAL_PROMPT).toContain(rule);
+    }
+  });
+
   it("has a prompt that takes the language from the call", () => {
     expect(RETELL_AGENT_GENERAL_PROMPT).toContain("{{language}}");
   });
