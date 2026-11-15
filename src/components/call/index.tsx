@@ -76,7 +76,8 @@ function Call({ interview }: InterviewProps) {
   const [isValidEmail, setIsValidEmail] = useState<boolean>(false);
   const [isOldUser, setIsOldUser] = useState<boolean>(false);
   const [callId, setCallId] = useState<string>("");
-  const { tabSwitchCount } = useTabSwitchPrevention();
+  // Before the call starts and after it ends, leaving the tab is not the interview's business.
+  const { tabSwitchCount } = useTabSwitchPrevention(isStarted && !isEnded);
   const [isFeedbackSubmitted, setIsFeedbackSubmitted] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [interviewerImg, setInterviewerImg] = useState("");
@@ -286,7 +287,7 @@ function Call({ interview }: InterviewProps) {
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
-      {isStarted && <TabSwitchWarning />}
+      {isStarted && !isEnded && <TabSwitchWarning />}
       <div className="bg-white rounded-md md:w-[80%] w-[90%]">
         <Card className="h-[88vh] rounded-lg border-2 border-b-4 border-r-4 border-black text-xl font-bold transition-all  md:block dark:border-white ">
           <div>
