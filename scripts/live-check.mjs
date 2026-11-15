@@ -164,7 +164,10 @@ try {
         route?.output?.body?.registerCallResponse?.access_token ===
           "[redacted]" &&
         (sent?.output?.ice_servers ?? []).every(
-          (server) => server.credential === "[redacted]",
+          // Servers that need no sign-in have no credential at all.
+          (server) =>
+            server.credential === undefined ||
+            server.credential === "[redacted]",
         ),
     );
   }
