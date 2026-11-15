@@ -14,12 +14,17 @@ Live: [ai-interviewer-neon.vercel.app](https://ai-interviewer-neon.vercel.app) (
 | :-------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------: |
 | <img src="docs/img/dashboard.jpg" alt="Dashboard with one interview" width="260"> | <img src="docs/img/generated-questions.jpg" alt="Questions generated for a Senior AI Engineer interview" width="260"> | <img src="docs/img/candidate-page.jpg" alt="The page a candidate opens to start the voice interview" width="260"> |
 
+After a call, each question gets its own summary of what the candidate actually said and what was missing:
+
+<img src="docs/img/question-summary.jpg" alt="Per-question summary of a candidate's answers after a real five-minute interview" width="820">
+
 |                            |                                                                                                                 |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | **Full stack**             | Next.js 14 (App Router), TypeScript, Tailwind, shadcn/ui, Postgres with Drizzle, Clerk auth, deployed on Vercel |
-| **Voice AI**               | Retell for the real-time voice call; OpenAI for question generation, analysis and insights                      |
+| **Voice AI**               | Retell for the real-time voice call, with a native voice per language; OpenAI for questions, analysis, insights |
 | **Validated model output** | Every model reply is parsed against a zod schema before it is stored or shown                                   |
-| **OpenTelemetry**          | Requests and model calls are traced, with model and token usage on each call                                    |
+| **OpenTelemetry**          | Every route, action, model call, voice request and SQL statement is a span with its input and output stored     |
+| **End-to-end check**       | A script runs every interview's link through the deployed site and compares the call with what was chosen       |
 | **Access rules in code**   | The browser never talks to the database; every server action states who may call it, and tests prove it         |
 | **Quality gates**          | Formatting, lint, strict type check, tests and a production build on every push                                 |
 
@@ -154,9 +159,15 @@ yarn build
 - The queries and access rules are tested against an in-process Postgres and were run once through the
   production driver against a Postgres 16 server.
 - On the deployed app, signed in: listing interviewers, creating an interview with generated questions and
-  opening it all work; signed out, the candidate page loads and a voice call can be registered with Retell.
-- Joining the audio of a call needs a microphone and has not been re-tested since the Retell SDK upgrade.
-- There are no automated end-to-end tests of the voice call.
+  opening it all work; signed out, the candidate page loads and a voice call starts.
+- Real calls were made on the deployed app for all four combinations of interviewer (Lisa, Bob) and language
+  (English, Spanish), each created through the dashboard form: the chosen interviewer spoke the generated
+  question in the chosen language, and the transcript, scores and per-question summaries were stored. Those
+  calls found one fault that no other check had: a Spanish voice that stayed silent on the agent's voice
+  model. It is fixed and covered by a test.
+- `scripts/live-check.mjs` checks a deployment end to end up to the start of the call (link, interviewer,
+  language, voice settings, recorded trace). It does not join the call, so it cannot hear a silent agent; that
+  still takes a real call.
 
 ## License
 
