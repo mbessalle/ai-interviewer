@@ -1,4 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
 const isPublicRoute = createRouteMatcher([
   "/",
@@ -40,13 +41,20 @@ export default clerkMiddleware((auth, req) => {
   console.log(
     `[MIDDLEWARE] Protected route - applying authentication: ${pathname}`,
   );
-  try {
-    auth().protect();
-    console.log(`[MIDDLEWARE] Authentication successful: ${pathname}`);
-  } catch (error) {
-    console.error(`[MIDDLEWARE] Authentication failed for ${pathname}:`, error);
-    throw error;
+  // A signed-out visitor goes to sign-in and comes back afterwards. auth().protect() alone answers
+  // them with a 404, so the live link in the README showed "page not found" to every visitor.
+  const { userId, redirectToSignIn } = auth();
+  if (!userId) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+    }
+    console.log(
+      `[MIDDLEWARE] Signed out - redirecting to sign-in: ${pathname}`,
+    );
+
+    return redirectToSignIn({ returnBackUrl: req.url });
   }
+  console.log(`[MIDDLEWARE] Authentication successful: ${pathname}`);
 });
 
 export const config = {
