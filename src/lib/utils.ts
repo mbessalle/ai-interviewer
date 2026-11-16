@@ -53,3 +53,28 @@ export function isLightColor(color: string) {
 
   return brightness > 155;
 }
+
+/** Did the interview get done? Retell's current analysis reports `call_successful`; older calls carry
+ * `agent_task_completion_rating` ("Complete" or "Partial" count). A voicemail never counts. */
+export function isInterviewCompleted(
+  analysis:
+    | {
+        call_successful?: boolean;
+        in_voicemail?: boolean;
+        agent_task_completion_rating?: string;
+      }
+    | null
+    | undefined,
+): boolean {
+  if (!analysis || analysis.in_voicemail) {
+    return false;
+  }
+  if (typeof analysis.call_successful === "boolean") {
+    return analysis.call_successful;
+  }
+
+  return (
+    analysis.agent_task_completion_rating === "Complete" ||
+    analysis.agent_task_completion_rating === "Partial"
+  );
+}

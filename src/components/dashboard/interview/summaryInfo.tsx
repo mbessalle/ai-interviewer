@@ -8,7 +8,7 @@ import { UserCircleIcon, SmileIcon, Info } from "lucide-react";
 import { useInterviewers } from "@/contexts/interviewers.context";
 import { PieChart } from "@mui/x-charts/PieChart";
 import { CandidateStatus } from "@/lib/enum";
-import { convertSecondstoMMSS } from "@/lib/utils";
+import { convertSecondstoMMSS, isInterviewCompleted } from "@/lib/utils";
 import Image from "next/image";
 import {
   Tooltip,
@@ -141,12 +141,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
         callCompletionCounter.partial += 1;
       }
 
-      const agentTaskCompletion =
-        response.details?.call_analysis?.agent_task_completion_rating;
-      if (
-        agentTaskCompletion === "Complete" ||
-        agentTaskCompletion === "Partial"
-      ) {
+      if (isInterviewCompleted(response.details?.call_analysis)) {
         completedCount += 1;
       }
 
