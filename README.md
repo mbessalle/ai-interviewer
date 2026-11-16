@@ -10,6 +10,8 @@ then sees the transcript, a communication analysis with supporting quotes, and i
 
 Live: [ai-interviewer-neon.vercel.app](https://ai-interviewer-neon.vercel.app) (sign-in required).
 
+![Walkthrough of the deployed app: the recruiter dashboard, an interview's overall analysis, one real five-minute interview held in Spanish with its hiring score of 82, communication score, per-question summaries and transcript, and the two AI interviewer agents](docs/img/demo.gif)
+
 |                                Recruiter dashboard                                |                                                  Generated questions                                                  |                                                  Candidate page                                                   |
 | :-------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------: |
 | <img src="docs/img/dashboard.jpg" alt="Dashboard with one interview" width="260"> | <img src="docs/img/generated-questions.jpg" alt="Questions generated for a Senior AI Engineer interview" width="260"> | <img src="docs/img/candidate-page.jpg" alt="The page a candidate opens to start the voice interview" width="260"> |
