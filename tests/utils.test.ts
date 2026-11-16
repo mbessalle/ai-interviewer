@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   convertSecondstoMMSS,
   convertToAscii,
+  isInterviewCompleted,
   isLightColor,
   testEmail,
 } from "@/lib/utils";
@@ -67,5 +68,32 @@ describe("prompts", () => {
       }
       expect(prompt).toContain("transcript text");
     }
+  });
+});
+
+describe("interview completion", () => {
+  it("counts a call Retell marks successful (the shape stored for real calls today)", () => {
+    expect(
+      isInterviewCompleted({
+        in_voicemail: false,
+        user_sentiment: "Positive",
+        call_successful: true,
+        custom_analysis_data: {},
+      } as never),
+    ).toBe(true);
+    expect(isInterviewCompleted({ call_successful: false })).toBe(false);
+  });
+
+  it("still reads the older rating and never counts voicemail or a missing analysis", () => {
+    expect(
+      isInterviewCompleted({ agent_task_completion_rating: "Partial" }),
+    ).toBe(true);
+    expect(
+      isInterviewCompleted({ agent_task_completion_rating: "Incomplete" }),
+    ).toBe(false);
+    expect(
+      isInterviewCompleted({ call_successful: true, in_voicemail: true }),
+    ).toBe(false);
+    expect(isInterviewCompleted(undefined)).toBe(false);
   });
 });

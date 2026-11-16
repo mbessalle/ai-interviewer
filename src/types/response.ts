@@ -109,5 +109,8 @@ export interface CallData {
     agent_task_completion_rating_reason: string;
     call_completion_rating: string;
     call_completion_rating_reason: string;
+    // Retell's current analysis has these instead of the two ratings above.
+    call_successful?: boolean;
+    in_voicemail?: boolean;
   };
 }
